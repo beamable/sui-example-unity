@@ -38,10 +38,10 @@ namespace Beamable.Microservices.SuiFederation.Features.Accounts.Storage
             return _collection;
         }
 
-        public async Task<Vault?> GetVaultByName(string userId)
+        public async Task<Vault?> GetVaultByName(string name)
         {
             var collection = await Get();
-            return await collection.Find(x => x.Name == userId).FirstOrDefaultAsync();
+            return await collection.Find(x => x.Name == name).FirstOrDefaultAsync();
         }
 
         public async Task<string?> GetNameByAddress(string address)

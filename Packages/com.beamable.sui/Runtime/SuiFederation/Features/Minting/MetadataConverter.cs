@@ -9,7 +9,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
 {
     internal static class MetadataConverter
     {
-        public static GameItem ToGameItem(this MintRequest request, BlockchainItem? contentDefinition)
+        public static GameItem ToGameItem(this MintRequestData request, BlockchainItem? contentDefinition)
         {
             return new GameItem
             {
@@ -26,7 +26,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
             };
         }
 
-        public static CurrencyItem ToCurrencyItem(this MintRequest request, BlockchainCurrency? contentDefinition)
+        public static CurrencyItem ToCurrencyItem(this MintRequestData request, BlockchainCurrency? contentDefinition)
         {
             return new CurrencyItem()
             {

@@ -1,86 +1,82 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Beamable.Common;
-using Beamable.Microservices.SuiFederation.Features.Contracts;
-using Beamable.Microservices.SuiFederation.Features.Contracts.Functions.Models;
-using Beamable.Microservices.SuiFederation.Features.Minting.Storage;
-using Beamable.Microservices.SuiFederation.Features.Minting.Storage.Models;
+using Beamable.Content;
+using Beamable.Microservices.SuiFederation.Features.Accounts;
+using Beamable.Microservices.SuiFederation.Features.Minting.Models;
+using Beamable.Microservices.SuiFederation.Features.SuiApi;
+using Beamable.Microservices.SuiFederation.Features.Transactions;
+using Beamable.Microservices.SuiFederation.Features.Transactions.Storage.Models;
+using Beamable.Sui.Common.Content;
 
 namespace Beamable.Microservices.SuiFederation.Features.Minting
 {
-    internal static class MintingService
+    public class MintingService : IService
     {
-        public static async Task Mint(string toAddress, IList<MintRequest> requests)
+        private readonly ContentService _contentService;
+        private readonly SuiApiService _suiApiServiceService;
+        private readonly TransactionManager _transactionManager;
+        private readonly AccountsService _accountsService;
+
+        public MintingService(ContentService contentService, SuiApiService suiApiServiceService,
+            TransactionManager transactionManager, AccountsService accountsService)
         {
-            var db = ServiceContext.Database;
+            _contentService = contentService;
+            _suiApiServiceService = suiApiServiceService;
+            _transactionManager = transactionManager;
+            _accountsService = accountsService;
+        }
 
-            var nonUniqueContentIds = requests
-                .Where(x => !x.IsUnique)
-                .Select(x => x.ContentId)
-                .ToHashSet();
+        public async Task Mint(long userId, string toWalletAddress, string inventoryTransactionId,
+            ICollection<MintRequestData> requests)
+        {
+            var existingTransaction = await _transactionManager.GetTransaction(inventoryTransactionId);
+            if (existingTransaction is not null && existingTransaction.State == TransactionState.Confirmed)
+            {
+                return;
+            }
 
-            var existingMints = (await db.GetTokenMappingsForContent(ContractService.DefaultContractName, nonUniqueContentIds))
-                .ToDictionary(x => x.ContentId, x => x);
-
-            var tokenIds = new List<BigInteger>();
-            var tokenAmounts = new List<BigInteger>();
-            var tokenMetadataHashes = new List<string>();
-
-            var mints = new List<Mint>();
+            var mintRequest = new InventoryMintRequest();
 
             foreach (var request in requests)
             {
-                var maybeExistingMint = existingMints.GetValueOrDefault(request.ContentId);
-                var tokenId = maybeExistingMint switch
-                {
-                    { } m => m.TokenId,
-                    _ => await db.GetNextCounterValue(ContractService.DefaultContractName)
-                };
-                var metadataHash = request.IsUnique ? await SaveMetadata(request) : "";
+                var contentDefinition = await _contentService.GetContent(request.ContentId);
 
-                tokenAmounts.Add(request.Amount);
-                tokenMetadataHashes.Add(metadataHash);
-                tokenIds.Add(tokenId);
-
-                mints.Add(new Mint
+                switch (contentDefinition)
                 {
-                    ContentId = request.ContentId,
-                    ContractName = ContractService.DefaultContractName,
-                    TokenId = tokenId
-                });
-                BeamableLogger.Log("Generated mint: {@mint}", new { request.ContentId, request.Amount, request.Properties, request.IsUnique, TokenId = tokenId, MetadataHash = metadataHash });
+                    case BlockchainCurrency blockchainCurrency:
+                        var currencyItem = request.ToCurrencyItem(blockchainCurrency);
+                        var treasuryCap = _accountsService.GetTreasuryCap(currencyItem.Name);
+                        if (treasuryCap is not null)
+                        {
+                            currencyItem.TreasuryCap = treasuryCap.Id;
+                            mintRequest.CurrencyItems.Add(currencyItem);
+                        }
+
+                        break;
+                    case BlockchainItem blockchainItem:
+                        var inventoryItem = request.ToGameItem(blockchainItem);
+                        var gameCap = _accountsService.GetGameCap(inventoryItem.ContentName);
+                        if (gameCap is not null)
+                        {
+                            inventoryItem.GameAdminCap = gameCap.Id;
+                            mintRequest.GameItems.Add(inventoryItem);
+                        }
+
+                        break;
+                    default:
+                        throw new UndefinedItemException(nameof(contentDefinition));
+                }
             }
 
-            var functionMessage = new ERC1155BatchMintFunctionMessage
+            var result = await _suiApiServiceService.MintInventoryItems(toWalletAddress, mintRequest);
+            if (result.error is null)
             {
-                To = toAddress,
-                TokenIds = tokenIds,
-                Amounts = tokenAmounts,
-                MetadataHashes = tokenMetadataHashes
-            };
-
-            await ServiceContext.RpcClient.SendTransactionAndWaitForReceiptAsync(ServiceContext.DefaultContract.PublicKey, functionMessage);
-
-            await db.InsertMints(mints);
+                await _transactionManager.MarkConfirmed(inventoryTransactionId);
+            }
+            else
+            {
+                await _transactionManager.MarkFailed(inventoryTransactionId);
+            }
         }
-
-        private static async Task<string> SaveMetadata(MintRequest request)
-        {
-            var uriString = await NtfExternalMetadataService.SaveExternalMetadata(new NftExternalMetadata(request.Properties));
-            BeamableLogger.Log("Metadata saved at {uri}", uriString);
-            var uri = new Uri(uriString);
-            return uri.Segments.Last();
-        }
-    }
-
-    internal class MintRequest
-    {
-        public string ContentId { get; set; }
-        public uint Amount { get; set; }
-        public Dictionary<string, string> Properties { get; set; }
-        public bool IsUnique { get; set; }
     }
 }

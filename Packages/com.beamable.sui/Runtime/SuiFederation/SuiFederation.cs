@@ -5,19 +5,17 @@ using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Common.Api;
 using Beamable.Common.Api.Inventory;
+using Beamable.Microservices.SuiFederation.Endpoints;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
 using Beamable.Microservices.SuiFederation.Features.Accounts.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
-using Beamable.Microservices.SuiFederation.Features.Contracts.Functions.Models;
-using Beamable.Microservices.SuiFederation.Features.EthRpc;
+using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
 using Beamable.Microservices.SuiFederation.Features.Minting;
-using Beamable.Microservices.SuiFederation.Features.Minting.Storage;
 using Beamable.Microservices.SuiFederation.Features.Transactions;
 using Beamable.Sui.Common;
 using Beamable.Server;
 using Beamable.Server.Api.RealmConfig;
-using Nethereum.Web3;
 
 namespace Beamable.Microservices.SuiFederation
 {
@@ -27,6 +25,32 @@ namespace Beamable.Microservices.SuiFederation
     {
         private static bool _initialized;
 
+        [ConfigureServices]
+        public static void Configure(IServiceBuilder serviceBuilder)
+        {
+            var dependencyBuilder = serviceBuilder.Builder;
+            dependencyBuilder.AddFeatures();
+            dependencyBuilder.AddEndpoints();
+        }
+
+        [InitializeServices]
+        public static async Task Initialize(IServiceInitializer initializer)
+        {
+            try
+            {
+                // Load realm configuration
+                var realmConfigService = initializer.GetService<IMicroserviceRealmConfigService>();
+                Configuration.RealmConfig = await realmConfigService.GetRealmConfigSettings();
+
+                //Compile Sui SDK TypeScript
+                ExecCommand.RunSdkCompilation();
+            }
+            catch (Exception ex)
+            {
+                BeamableLogger.LogException(ex);
+                BeamableLogger.LogWarning("Service initialization failed. Please fix the issues before using the service.");
+            }
+        }
 
         public Promise<FederatedAuthenticationResponse> Authenticate(string token, string challenge, string solution)
         {

@@ -7,6 +7,5 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts.Storage.Models
         [BsonElement("_id")]
         public string Name { get; set; }
         public string PublicKey { get; set; }
-        public string BaseMetadataUri { get; set; }
     }
 }

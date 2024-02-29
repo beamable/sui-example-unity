@@ -1,44 +1,55 @@
 ﻿using System.Threading.Tasks;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Storage.Models;
+using Beamable.Server;
 using MongoDB.Driver;
 
 namespace Beamable.Microservices.SuiFederation.Features.Contracts.Storage
 {
-    public static class ContractCollection
+    public class ContractCollection : IService
     {
-        private static IMongoCollection<Contract> _collection;
+        private readonly IStorageObjectConnectionProvider _storageObjectConnectionProvider;
+        private IMongoCollection<Contract>? _collection;
 
-        private static async ValueTask<IMongoCollection<Contract>> Get(IMongoDatabase db)
+        public ContractCollection(IStorageObjectConnectionProvider storageObjectConnectionProvider)
+        {
+            _storageObjectConnectionProvider = storageObjectConnectionProvider;
+        }
+
+        private async ValueTask<IMongoCollection<Contract>> Get()
         {
             if (_collection is null)
             {
+                var db = await _storageObjectConnectionProvider.SuiStorageDatabase();
                 _collection = db.GetCollection<Contract>("contract");
                 await _collection.Indexes.CreateManyAsync(new[]
-                    {
-                        new CreateIndexModel<Contract>(
-                            Builders<Contract>.IndexKeys
-                                .Ascending(x => x.Name)
-                                .Ascending(x => x.PublicKey),
-                            new CreateIndexOptions { Unique = true }
-                        )
-                    }
-                );
+                {
+                    new CreateIndexModel<Contract>(
+                        Builders<Contract>.IndexKeys.Ascending(x => x.Name).Ascending(x => x.PublicKey),
+                        new CreateIndexOptions { Unique = true })
+                });
             }
 
             return _collection;
         }
 
-        public static async Task<Contract> GetContract(this IMongoDatabase db, string name)
+        public async Task<Contract?> GetContract(string name)
         {
-            var collection = await Get(db);
-            return await collection
-                .Find(x => x.Name == name)
-                .FirstOrDefaultAsync();
+            var collection = await Get();
+            return await collection.Find(x => x.Name == name).FirstOrDefaultAsync();
         }
 
-        public static async Task<bool> TryInsertContract(this IMongoDatabase db, Contract contract)
+        public async Task SaveContract(Contract contract)
         {
-            var collection = await Get(db);
+            var collection = await Get();
+            await collection.ReplaceOneAsync(
+                x => x.Name == contract.Name,
+                contract,
+                new ReplaceOptions { IsUpsert = true });
+        }
+
+        public async Task<bool> TryInsertContract(Contract contract)
+        {
+            var collection = await Get();
             try
             {
                 await collection.InsertOneAsync(contract);

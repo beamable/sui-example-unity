@@ -10,7 +10,8 @@ namespace Beamable.Editor.Sui.Hooks
         
         public void Execute(IMicroserviceBuildContext ctx)
         {
-            ctx.AddDirectory($"{SourceBasePath}/Solidity", "Solidity");
+            ctx.AddDirectory($"{SourceBasePath}/Move", "move");
+            ctx.AddDirectory($"{SourceBasePath}/Features/SuiApi/ts", "sui_ts");
         }
     }
     

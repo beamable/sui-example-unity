@@ -2,18 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Assets.Beamable.Microservices.SuiFederation.Features.EthRpc;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.Minting.Models;
 using Beamable.Microservices.SuiFederation.Features.SuiApi.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.SuiApi.Models;
-using Newtonsoft.Json;
 
 namespace Beamable.Microservices.SuiFederation.Features.SuiApi
 {
     public class SuiApiService : IService
     {
-        private const string BridgeModulePath = "./js/bridge.js";
+        private const string BridgeModulePath = "./sui_ts/js/bridge.js";
 
         public static async Task<SuiKeys> ExportPrivateKey()
         {
@@ -137,7 +135,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
                     var environment = Configuration.SuiEnvironment;
                     var packageId = Configuration.PackageId;
                     var secretKey = Configuration.PrivateKey;
-                    var mintRequestJson = JsonConvert.SerializeObject(request);
+                    //var mintRequestJson = JsonConvert.SerializeObject(request);
                     // var result =  await StaticNodeJSService.InvokeFromFileAsync<string>(
                     //     BridgeModulePath,
                     //     "mintInventory",

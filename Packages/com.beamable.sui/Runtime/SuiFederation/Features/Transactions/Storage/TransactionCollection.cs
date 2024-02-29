@@ -1,53 +1,73 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Beamable.Microservices.SuiFederation.Features.Transactions.Storage.Models;
+using Beamable.Server;
 using MongoDB.Driver;
 
 namespace Beamable.Microservices.SuiFederation.Features.Transactions.Storage
 {
-    internal static class TransactionCollection
+    public class TransactionCollection : IService
+{
+    private readonly IStorageObjectConnectionProvider _storageObjectConnectionProvider;
+    private IMongoCollection<TransactionRecord>? _collection;
+
+    public TransactionCollection(IStorageObjectConnectionProvider storageObjectConnectionProvider)
     {
-        private static IMongoCollection<TransactionRecord> _collection;
+        _storageObjectConnectionProvider = storageObjectConnectionProvider;
+    }
 
-        private static async ValueTask<IMongoCollection<TransactionRecord>> Get(IMongoDatabase db)
+    private async ValueTask<IMongoCollection<TransactionRecord>> Get()
+    {
+        if (_collection is null)
         {
-            if (_collection is null)
-            {
-                _collection = db.GetCollection<TransactionRecord>("transaction");
+            var db = await _storageObjectConnectionProvider.SuiStorageDatabase();
+            _collection = db.GetCollection<TransactionRecord>("transaction");
 
-                await _collection.Indexes.CreateOneAsync(
-                    new CreateIndexModel<TransactionRecord>(
-                        Builders<TransactionRecord>.IndexKeys
-                            .Ascending(x => x.ExpireAt),
-                        new CreateIndexOptions { ExpireAfter = TimeSpan.Zero }
-                    )
-                );
-            }
-
-            return _collection;
+            await _collection.Indexes.CreateOneAsync(
+                new CreateIndexModel<TransactionRecord>(
+                    Builders<TransactionRecord>.IndexKeys
+                        .Ascending(x => x.ExpireAt),
+                    new CreateIndexOptions { ExpireAfter = TimeSpan.Zero }
+                )
+            );
         }
+        return _collection;
+    }
 
-        public static async Task<bool> TryInsertTransaction(this IMongoDatabase db, string transactionId)
+    public async Task<TransactionRecord> GetTransaction(Expression<Func<TransactionRecord, bool>> filter)
+    {
+        var collection = await Get();
+        return await collection.Find(filter).FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> TryInsertTransaction(TransactionRecord transactionRecord)
+    {
+        var collection = await Get();
+        try
         {
-            var collection = await Get(db);
-            try
-            {
-                await collection.InsertOneAsync(new TransactionRecord
-                {
-                    Id = transactionId
-                });
-                return true;
-            }
-            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
-            {
-                return false;
-            }
+            await collection.InsertOneAsync(transactionRecord);
+            return true;
         }
-
-        public static async Task DeleteTransaction(this IMongoDatabase db, string transactionId)
+        catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            var collection = await Get(db);
-            await collection.DeleteOneAsync(x => x.Id == transactionId);
+            return false;
         }
     }
+
+    public async Task SaveState(string transactionId, TransactionState transactionState)
+    {
+        var collection = await Get();
+        await collection.UpdateOneAsync(x => x.Id == transactionId,
+            Builders<TransactionRecord>.Update
+                .Set(x => x.State, transactionState)
+        );
+    }
+
+    public async Task DeleteTransaction(string transactionId)
+    {
+        var collection = await Get();
+        await collection.DeleteOneAsync(x => x.Id == transactionId);
+    }
+}
 }
