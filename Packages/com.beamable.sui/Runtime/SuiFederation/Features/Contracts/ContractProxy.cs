@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Storage;
@@ -34,14 +35,22 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
             return contract;
         }
 
-        public async Task InitializeDefaultContract(string publicKey)
+        public async Task InitializeDefaultContract(Contract contract)
         {
             _cachedDefaultContract = null;
-            await _contractCollection.SaveContract(new Contract
-            {
-                Name = ContractService.DefaultContractName,
-                PublicKey = publicKey
-            });
+            await _contractCollection.TryInsertContract(contract);
+        }
+
+        public async ValueTask<string> GetGameCap(string name)
+        {
+            var contract = await GetDefaultContract();
+            return contract.GameAdminCaps.SingleOrDefault(x => x.Name == name)?.Id;
+        }
+
+        public async ValueTask<string> GetTreasuryCap(string name)
+        {
+            var contract = await GetDefaultContract();
+            return contract.TreasuryCaps.SingleOrDefault(x => x.Name == name)?.Id;
         }
     }
 }

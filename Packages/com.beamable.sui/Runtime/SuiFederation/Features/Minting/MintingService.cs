@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Beamable.Content;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
+using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.Minting.Models;
 using Beamable.Microservices.SuiFederation.Features.SuiApi;
 using Beamable.Microservices.SuiFederation.Features.Transactions;
@@ -16,14 +17,16 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
         private readonly SuiApiService _suiApiServiceService;
         private readonly TransactionManager _transactionManager;
         private readonly AccountsService _accountsService;
+        private readonly ContractProxy _contractProxy;
 
         public MintingService(ContentService contentService, SuiApiService suiApiServiceService,
-            TransactionManager transactionManager, AccountsService accountsService)
+            TransactionManager transactionManager, AccountsService accountsService, ContractProxy contractProxy)
         {
             _contentService = contentService;
             _suiApiServiceService = suiApiServiceService;
             _transactionManager = transactionManager;
             _accountsService = accountsService;
+            _contractProxy = contractProxy;
         }
 
         public async Task Mint(long userId, string toWalletAddress, string inventoryTransactionId,
@@ -45,20 +48,20 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 {
                     case BlockchainCurrency blockchainCurrency:
                         var currencyItem = request.ToCurrencyItem(blockchainCurrency);
-                        var treasuryCap = _accountsService.GetTreasuryCap(currencyItem.Name);
+                        var treasuryCap = await _contractProxy.GetTreasuryCap(currencyItem.Name);
                         if (treasuryCap is not null)
                         {
-                            currencyItem.TreasuryCap = treasuryCap.Id;
+                            currencyItem.TreasuryCap = treasuryCap;
                             mintRequest.CurrencyItems.Add(currencyItem);
                         }
 
                         break;
                     case BlockchainItem blockchainItem:
                         var inventoryItem = request.ToGameItem(blockchainItem);
-                        var gameCap = _accountsService.GetGameCap(inventoryItem.ContentName);
+                        var gameCap = await _contractProxy.GetGameCap(inventoryItem.ContentName);
                         if (gameCap is not null)
                         {
-                            inventoryItem.GameAdminCap = gameCap.Id;
+                            inventoryItem.GameAdminCap = gameCap;
                             mintRequest.GameItems.Add(inventoryItem);
                         }
 
@@ -68,7 +71,10 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 }
             }
 
-            var result = await _suiApiServiceService.MintInventoryItems(toWalletAddress, mintRequest);
+            var contract = await _contractProxy.GetDefaultContract();
+            var account = await _accountsService.GetOrCreateRealmAccount();
+
+            var result = await _suiApiServiceService.MintInventoryItems(toWalletAddress, mintRequest, contract, account);
             if (result.error is null)
             {
                 await _transactionManager.MarkConfirmed(inventoryTransactionId);

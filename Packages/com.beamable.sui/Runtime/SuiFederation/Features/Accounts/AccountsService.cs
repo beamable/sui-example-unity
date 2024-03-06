@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.Accounts.Models;
 using Beamable.Microservices.SuiFederation.Features.Accounts.Storage;
 using Beamable.Microservices.SuiFederation.Features.Accounts.Storage.Models;
-using Beamable.Microservices.SuiFederation.Features.Minting;
+using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.SuiApi;
 using Beamable.Microservices.SuiFederation.Features.SuiApi.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -20,16 +18,18 @@ namespace Beamable.Microservices.SuiFederation.Features.Accounts
     {
         private const string RealmAccountName = "default-account";
         private readonly SuiApiService _suiApiServiceService;
+        private readonly ContractProxy _contractProxy;
         private readonly VaultCollection _vaultCollection;
         private Account? _cachedRealmAccount;
         private readonly MemoryCache _accountCache = new(Options.Create(new MemoryCacheOptions()));
 
         private SuiCapObjects _capObjects = new();
 
-        public AccountsService(SuiApiService suiApiServiceService, VaultCollection vaultCollection)
+        public AccountsService(VaultCollection vaultCollection, SuiApiService suiApiServiceService, ContractProxy contractProxy)
         {
-            _suiApiServiceService = suiApiServiceService;
             _vaultCollection = vaultCollection;
+            _suiApiServiceService = suiApiServiceService;
+            _contractProxy = contractProxy;
         }
 
         public async Task<Account> GetOrCreateAccount(string accountName)
@@ -76,30 +76,6 @@ namespace Beamable.Microservices.SuiFederation.Features.Accounts
             return account;
         }
 
-        public async Task InitializeObjects()
-        {
-            if (string.IsNullOrWhiteSpace(Configuration.PackageId) ||
-                string.IsNullOrWhiteSpace(Configuration.PrivateKey))
-            {
-                throw new ConfigurationException(
-                    $"Couldn't initialize cap objects, publish the smart contract and store the packageId and private key in the realm config.");
-            }
-
-            var caps = await _suiApiServiceService.InitializeObjects();
-            _capObjects = caps;
-            BeamableLogger.Log("Initialized CAP objects for package {PackageId}", Configuration.PackageId);
-        }
-
-        public SuiCapObject? GetGameCap(string name)
-        {
-            return _capObjects.GameAdminCaps.SingleOrDefault(x => x.Name == name);
-        }
-
-        public SuiCapObject? GetTreasuryCap(string name)
-        {
-            return _capObjects.TreasuryCaps.SingleOrDefault(x => x.Name == name);
-        }
-
         private async Task<Account?> GetAccount(string accountName)
         {
             return await _accountCache.GetOrCreateAsync(accountName, async cacheEntry =>
@@ -124,6 +100,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Accounts
         private async Task<Account?> CreateAccount(string accountName)
         {
             var suiKeys = await SuiApiService.ExportPrivateKey();
+            BeamableLogger.Log($"Generated realm-account {suiKeys.Public} - {suiKeys.Private}");
             var privateKeyEncrypted = Rijndael.Encrypt(suiKeys.Private, Configuration.RealmSecret, KeySize.Aes256);
             var newAccount = new Account
             {
@@ -140,53 +117,6 @@ namespace Beamable.Microservices.SuiFederation.Features.Accounts
             })
                 ? newAccount
                 : null;
-        }
-
-        public async Task<bool> VerifySignature(string token, string challenge, string solution)
-        {
-            return await _suiApiServiceService.VerifySignature(token, challenge, solution);
-        }
-
-        public async Promise<FederatedInventoryProxyState> GetInventoryState(string id)
-        {
-            var coinBalance =
-                await _suiApiServiceService.GetBalance(id, _capObjects.TreasuryCaps.Select(x => x.Name).ToArray());
-            var suiObjects = await _suiApiServiceService.GetOwnedObjects(id);
-
-            var items = new List<(string, FederatedItemProxy)>();
-            var currencies =
-                coinBalance.coins?.ToDictionary(coin => GetCurrencyContenId(coin.coinType), coin => coin.total);
-
-            foreach (var suiObject in suiObjects)
-            {
-                items.Add((GetItemContenId(suiObject.type),
-                        new FederatedItemProxy
-                        {
-                            proxyId = suiObject.objectId,
-                            properties = suiObject.GetProperties().ToList()
-                        }
-                    ));
-            }
-
-            var itemGroups = items
-                .GroupBy(i => i.Item1)
-                .ToDictionary(g => g.Key, g => g.Select(i => i.Item2).ToList());
-
-            return new FederatedInventoryProxyState
-            {
-                currencies = currencies,
-                items = itemGroups
-            };
-        }
-
-        private string GetItemContenId(string itemName)
-        {
-            return $"items.blockchain_item.{itemName}";
-        }
-
-        private string GetCurrencyContenId(string currencyName)
-        {
-            return $"currency.blockchain_currency.{currencyName}";
         }
     }
 }

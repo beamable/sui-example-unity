@@ -1,18 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Beamable.Common;
-using Beamable.Common.Api;
 using Beamable.Common.Api.Inventory;
 using Beamable.Microservices.SuiFederation.Endpoints;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
-using Beamable.Microservices.SuiFederation.Features.Accounts.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
-using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
-using Beamable.Microservices.SuiFederation.Features.Minting;
-using Beamable.Microservices.SuiFederation.Features.Transactions;
 using Beamable.Sui.Common;
 using Beamable.Server;
 using Beamable.Server.Api.RealmConfig;
@@ -42,8 +36,19 @@ namespace Beamable.Microservices.SuiFederation
                 var realmConfigService = initializer.GetService<IMicroserviceRealmConfigService>();
                 Configuration.RealmConfig = await realmConfigService.GetRealmConfigSettings();
 
+                // Validate configuration
+                if (string.IsNullOrEmpty(Configuration.SuiEnvironment))
+                {
+                    throw new ConfigurationException($"{nameof(Configuration.SuiEnvironment)} is not defined in realm config. Please apply the configuration and restart the service to make it operational.");
+                }
+
+                await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
+
                 //Compile Sui SDK TypeScript
                 ExecCommand.RunSdkCompilation();
+
+                //Load or create default contract
+                await initializer.GetService<ContractService>().GetOrCreateDefaultContract();
             }
             catch (Exception ex)
             {
@@ -52,20 +57,52 @@ namespace Beamable.Microservices.SuiFederation
             }
         }
 
-        public Promise<FederatedAuthenticationResponse> Authenticate(string token, string challenge, string solution)
+        [ClientCallable]
+        public async Promise<string> InitializeContract()
         {
-            throw new NotImplementedException();
+            // Validate configuration
+            if (string.IsNullOrEmpty(Configuration.SuiEnvironment))
+            {
+                throw new ConfigurationException($"{nameof(Configuration.SuiEnvironment)} is not defined in realm config. Please apply the configuration and restart the service to make it operational.");
+            }
+
+            var contract = await Provider.GetService<ContractService>()
+                .GetOrCreateDefaultContract();
+            return contract.PackageId;
         }
 
-        public Promise<FederatedInventoryProxyState> GetInventoryState(string id)
+        [ClientCallable]
+        public async Promise<string> GetRealmAccount()
         {
-            throw new NotImplementedException();
+            var account = await Provider.GetService<AccountsService>()
+                .GetOrCreateRealmAccount();
+            return account.Address;
         }
 
-        public Promise<FederatedInventoryProxyState> StartInventoryTransaction(string id, string transaction, Dictionary<string, long> currencies, List<FederatedItemCreateRequest> newItems, List<FederatedItemDeleteRequest> deleteItems,
+        [ClientCallable]
+        public async Promise<string> GetContractAddress()
+        {
+            return await Provider.GetService<GetContractAddressEndpoint>()
+                .GetContractAddress();
+        }
+
+        public async Promise<FederatedAuthenticationResponse> Authenticate(string token, string challenge, string solution)
+        {
+            return await Provider.GetService<AuthenticateEndpoint>()
+                .Authenticate(token, challenge, solution);
+        }
+
+        public async Promise<FederatedInventoryProxyState> GetInventoryState(string id)
+        {
+            return await Provider.GetService<GetInventoryStateEndpoint>()
+                .GetInventoryState(id);
+        }
+
+        public async Promise<FederatedInventoryProxyState> StartInventoryTransaction(string id, string transaction, Dictionary<string, long> currencies, List<FederatedItemCreateRequest> newItems, List<FederatedItemDeleteRequest> deleteItems,
             List<FederatedItemUpdateRequest> updateItems)
         {
-            throw new NotImplementedException();
+            return await Provider.GetService<StartInventoryTransactionEndpoint>()
+                .StartInventoryTransaction(id, Context.UserId, transaction, currencies, newItems, deleteItems, updateItems);
         }
     }
 }

@@ -15,14 +15,9 @@ namespace Beamable.Microservices.SuiFederation
 
         public static RealmConfig RealmConfig { get; internal set; }
 
-        public static string RPCEndpoint => GetValue(nameof(RPCEndpoint), "");
-        public static string SuiEnvironment => GetValue(nameof(SuiEnvironment), "");
-        public static string PackageId => GetValue(nameof(PackageId), "");
-        public static string PrivateKey => GetValue(nameof(PrivateKey), "");
+        public static string SuiEnvironment => GetValue(nameof(SuiEnvironment), "devnet");
         public static bool AllowManagedAccounts => GetValue(nameof(AllowManagedAccounts), true);
         public static int AuthenticationChallengeTtlSec => GetValue(nameof(AuthenticationChallengeTtlSec), 600);
-        public static int ReceiptPoolIntervalMs => GetValue(nameof(ReceiptPoolIntervalMs), 200);
-        public static int ReceiptPoolTimeoutMs => GetValue(nameof(ReceiptPoolTimeoutMs), 20000);
 
         private static T GetValue<T>(string key, T defaultValue) where T : IConvertible
         {

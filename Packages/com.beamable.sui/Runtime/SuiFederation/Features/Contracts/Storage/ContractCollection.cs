@@ -24,7 +24,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts.Storage
                 await _collection.Indexes.CreateManyAsync(new[]
                 {
                     new CreateIndexModel<Contract>(
-                        Builders<Contract>.IndexKeys.Ascending(x => x.Name).Ascending(x => x.PublicKey),
+                        Builders<Contract>.IndexKeys.Ascending(x => x.Name).Ascending(x => x.PackageId),
                         new CreateIndexOptions { Unique = true })
                 });
             }

@@ -1,23 +1,23 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
+using Beamable.Microservices.SuiFederation.Features.Accounts.Models;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Storage.Models;
+using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
+using Beamable.Microservices.SuiFederation.Features.SuiClientWrapper;
 
 namespace Beamable.Microservices.SuiFederation.Features.Contracts
 {
     public class ContractService : IService
     {
-        private const string DefaultErc1155Path = "Move/Contracts/default.move";
-        private static readonly string DefaultContractSource = File.ReadAllText(DefaultErc1155Path);
         public const string DefaultContractName = "default";
         private readonly ContractProxy _contractProxy;
         private readonly AccountsService _accountsService;
-
-        private static readonly SemaphoreSlim Semaphore = new(1);
 
         public ContractService(ContractProxy contractProxy, AccountsService accountsService)
         {
@@ -27,18 +27,18 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
 
         public async ValueTask<Contract> GetOrCreateDefaultContract()
         {
-            await Semaphore.WaitAsync();
             try
             {
-                return await GetOrCreateContract(DefaultContractName, DefaultContractSource);
+                return await GetOrCreateContract();
             }
-            finally
+            catch (Exception ex)
             {
-                Semaphore.Release();
+                BeamableLogger.LogError($"{DefaultContractName} create exception {ex.Message}");
+                throw new ContractCreateException();
             }
         }
 
-        private async Task<Contract> GetOrCreateContract(string name, string contractFile)
+        private async ValueTask<Contract> GetOrCreateContract()
         {
             var persistedContract = await _contractProxy.GetDefaultContractOrDefault();
             if (persistedContract is not null)
@@ -46,34 +46,34 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
                 return persistedContract;
             }
 
+            //Install SUI Client compatibility layer
+            ExecCommand.RunSuiClientCompilation();
+
             var realmAccount = await _accountsService.GetOrCreateRealmAccount();
-
-            // var compilerOutput = await Compile(contractFile);
-            // var contractOutput = compilerOutput.Contracts.Contract.First().Value;
-            // var abi = contractOutput.GetAbi();
-            // var contractByteCode = contractOutput.GetBytecode();
-
-            //var gas = await _ethRpcClient.EstimateContractGasAsync(realmAccount, abi, contractByteCode);
-            //var result = await _ethRpcClient.DeployContractAsync(realmAccount, abi, contractByteCode, gas);
+            var contractDeployOutput = await SuiClient.Compile(realmAccount);
+            var contractCaps = contractDeployOutput.GetCapObjects();
 
             var contract = new Contract
             {
-                Name = name,
-                PublicKey = ""//result.ContractAddress
+                Name = DefaultContractName,
+                PackageId = contractDeployOutput.GetPackageId(),
+                GameAdminCaps = contractCaps.GameAdminCaps.Select(c => new CapObject
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                }).ToList(),
+                TreasuryCaps = contractCaps.TreasuryCaps.Select(c => new CapObject
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                }).ToList()
             };
 
-            await _contractProxy.InitializeDefaultContract(contract.PublicKey);
-            persistedContract = await _contractProxy.GetDefaultContractOrDefault();
-
-            if (persistedContract is not null)
-            {
-                BeamableLogger.Log("Contract {contractName} created successfully. Address: {contractAddress}", name, contract.PublicKey);
-                return contract;
-            }
-
-            BeamableLogger.LogWarning("Contract {contractName} already created, fetching again", name);
-            return await GetOrCreateContract(name, contractFile);
+            await _contractProxy.InitializeDefaultContract(contract);
+            return contract;
         }
+
+
 
 
     }

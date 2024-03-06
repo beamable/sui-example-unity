@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper.Exceptions;
 
@@ -29,6 +28,29 @@ namespace Beamable.Microservices.SuiFederation.Features.ExecWrapper
             catch (Exception e)
             {
                 BeamableLogger.LogError("RunSdkCompilation error: {processOutput}", e.Message);
+                throw new ExecCommandException(e.Message);
+            }
+        }
+
+        public static void RunSuiClientCompilation()
+        {
+            try
+            {
+                var workingDirectory = "/subapp/move";
+                BeamableLogger.Log("Running SuiClientCompilation process...");
+                ExecuteShell("cp libs/sgerrand.rsa.pub /etc/apk/keys/sgerrand.rsa.pub",workingDirectory);
+                ExecuteShell("apk add -q libs/glibc-2.35-r1.apk libs/glibc-bin-2.35-r1.apk libs/glibc-i18n-2.35-r1.apk",workingDirectory);
+                ExecuteShell("/usr/glibc-compat/bin/localedef -i en_US -f UTF-8 en_US.UTF-8",workingDirectory);
+                ExecuteShell("apk add -q gcompat",workingDirectory);
+                ExecuteShell("apk add -q git",workingDirectory);
+                ExecuteShell("rm /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6.0.30",workingDirectory);
+                ExecuteShell("cp libs/libstdc++.so.6.0.30 /usr/lib/libstdc++.so.6.0.30",workingDirectory);
+                ExecuteShell("ln -s /usr/lib/libstdc++.so.6.0.30 /usr/lib/libstdc++.so.6",workingDirectory);
+                BeamableLogger.Log("Done running SuiClientCompilation process.");
+            }
+            catch (Exception e)
+            {
+                BeamableLogger.LogError("SuiClientCompilation error: {processOutput}", e.Message);
                 throw new ExecCommandException(e.Message);
             }
         }

@@ -6,12 +6,11 @@ namespace Beamable.Microservices.SuiFederation.Endpoints
     {
         public static void AddEndpoints(this IDependencyBuilder builder)
         {
-            // builder.AddScoped<AuthenticateEndpoint>();
-            // builder.AddScoped<GetRealmAccountEndpoint>();
-            // builder.AddScoped<GetContractAddressEndpoint>();
-            // builder.AddScoped<GetInventoryStateEndpoint>();
-            // builder.AddScoped<StartInventoryTransactionEndpoint>();
-            // builder.AddScoped<UpdateTokenEndpoint>();
+            builder.AddScoped<AuthenticateEndpoint>();
+            builder.AddScoped<GetRealmAccountEndpoint>();
+            builder.AddScoped<GetContractAddressEndpoint>();
+            builder.AddScoped<GetInventoryStateEndpoint>();
+            builder.AddScoped<StartInventoryTransactionEndpoint>();
         }
     }
 }

@@ -30,6 +30,26 @@ namespace Beamable.Server.Clients
                 return "SuiFederation";
             }
         }
+        
+        /// <summary>
+        /// Call the InitializeContract method on the SuiFederation microservice
+        /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.InitializeContract"/>
+        /// </summary>
+        public Beamable.Common.Promise<string> InitializeContract()
+        {
+            System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
+            return this.Request<string>("SuiFederation", "InitializeContract", serializedFields);
+        }
+        
+        /// <summary>
+        /// Call the GetRealmAccount method on the SuiFederation microservice
+        /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.GetRealmAccount"/>
+        /// </summary>
+        public Beamable.Common.Promise<string> GetRealmAccount()
+        {
+            System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
+            return this.Request<string>("SuiFederation", "GetRealmAccount", serializedFields);
+        }
     }
     
     internal sealed class MicroserviceParametersSuiFederationClient
