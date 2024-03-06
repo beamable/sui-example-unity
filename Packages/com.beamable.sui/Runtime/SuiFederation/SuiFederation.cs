@@ -42,10 +42,11 @@ namespace Beamable.Microservices.SuiFederation
                     throw new ConfigurationException($"{nameof(Configuration.SuiEnvironment)} is not defined in realm config. Please apply the configuration and restart the service to make it operational.");
                 }
 
-                await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
-
                 //Compile Sui SDK TypeScript
                 ExecCommand.RunSdkCompilation();
+
+                //Load or create realm account
+                await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
 
                 //Load or create default contract
                 await initializer.GetService<ContractService>().GetOrCreateDefaultContract();

@@ -15,6 +15,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
     {
         private static bool _initialized;
         private const int ProcessTimeoutMs = 5000;
+        private const int FaucetWaitTimeSec = 20;
         private const string WorkingDirectory = "/subapp/move";
         private const string ExecutableAmd64 = "sui-x64-1.18.1";
         private const string ExecutableArm64 = "sui-arm64-1.18.1";
@@ -36,7 +37,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
         {
             if (!_initialized)
             {
-                BeamableLogger.Log("Extracting executables...");
+                BeamableLogger.Log("Extracting Sui CLI executables...");
                 await ExecuteShell("tar -xvzf sui-x64.tar.gz", WorkingDirectory);
                 await ExecuteShell("tar -xvzf sui-arm64.tar.gz", WorkingDirectory);
                 BeamableLogger.Log("Changing permissions of Move/sui");
@@ -51,9 +52,9 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
 
                 if (Configuration.SuiEnvironment == "devnet")
                 {
-                    BeamableLogger.Log("Requesting faucet coins, waiting 10 sec...");
+                    BeamableLogger.Log($"Requesting faucet coins, waiting {FaucetWaitTimeSec} sec...");
                     await Execute(GetExecutable(), $"client --client.config client.yaml faucet");
-                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    await Task.Delay(TimeSpan.FromSeconds(FaucetWaitTimeSec));
                     BeamableLogger.Log("Done requesting faucet coins.");
                 }
                 _initialized = true;
