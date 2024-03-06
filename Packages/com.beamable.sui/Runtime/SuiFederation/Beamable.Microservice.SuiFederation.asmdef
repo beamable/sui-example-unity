@@ -37,7 +37,8 @@
         "Microsoft.Extensions.Http.dll",
         "Microsoft.Extensions.Logging.Abstractions.dll",
         "Microsoft.Extensions.Options.dll",
-        "Microsoft.Extensions.Hosting.Abstractions.dll"
+        "Microsoft.Extensions.Hosting.Abstractions.dll",
+        "Microsoft.Extensions.Configuration.Abstractions.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [],
