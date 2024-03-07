@@ -50,6 +50,16 @@ namespace Beamable.Server.Clients
             System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
             return this.Request<string>("SuiFederation", "GetRealmAccount", serializedFields);
         }
+        
+        /// <summary>
+        /// Call the GetContractAddress method on the SuiFederation microservice
+        /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.GetContractAddress"/>
+        /// </summary>
+        public Beamable.Common.Promise<string> GetContractAddress()
+        {
+            System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
+            return this.Request<string>("SuiFederation", "GetContractAddress", serializedFields);
+        }
     }
     
     internal sealed class MicroserviceParametersSuiFederationClient

@@ -21,13 +21,17 @@ MonoBehaviour:
   clientPermission:
     writeSelf: 0
   federation:
-    HasValue: 0
+    HasValue: 1
     Value:
-      Service: 
-      Namespace: 
-  _name: 
-  _description: 
-  _image: 
+      Service: SuiFederation
+      Namespace: sui
+  _name: Cat
+  _description: Awsome cat
+  _image: https://i.imgur.com/OEyexMf.jpeg
   _customProperties:
-    keys: []
-    values: []
+    keys:
+    - chain
+    - 2
+    values:
+    - chain
+    - 
