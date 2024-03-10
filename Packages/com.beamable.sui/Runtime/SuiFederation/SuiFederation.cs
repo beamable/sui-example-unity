@@ -6,8 +6,9 @@ using Beamable.Common.Api.Inventory;
 using Beamable.Microservices.SuiFederation.Endpoints;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
-using Beamable.Microservices.SuiFederation.Features.Contracts.Models;
+using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
+using Beamable.Microservices.SuiFederation.Features.Inventory;
 using Beamable.Sui.Common;
 using Beamable.Server;
 using Beamable.Server.Api.RealmConfig;
@@ -43,14 +44,9 @@ namespace Beamable.Microservices.SuiFederation
                     throw new ConfigurationException($"{nameof(Configuration.SuiEnvironment)} is not defined in realm config. Please apply the configuration and restart the service to make it operational.");
                 }
 
-                //Compile Sui SDK TypeScript
-                ExecCommand.RunSdkCompilation();
+                // Initialize accounts and contracts
+                _ = InitializeInternal(initializer);
 
-                //Load or create realm account
-                await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
-
-                //Load or create contracts
-                await initializer.GetService<ContractService>().InitializeContentContracts();
             }
             catch (Exception ex)
             {
@@ -59,9 +55,24 @@ namespace Beamable.Microservices.SuiFederation
             }
         }
 
+        private static async Task InitializeInternal(IServiceInitializer initializer)
+        {
+            //Compile Sui SDK TypeScript
+            await ExecCommand.RunSdkCompilation();
+
+            //Load or create realm account
+            await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
+
+            //Load or create contracts
+            await initializer.GetService<ContractService>().InitializeContentContracts();
+            _initialized = true;
+        }
+
         [ClientCallable]
         public async Promise<string> GetRealmAccount()
         {
+            if (!_initialized)
+                throw new ContractNotInitializedException();
             var account = await Provider.GetService<AccountsService>()
                 .GetOrCreateRealmAccount();
             return account.Address;

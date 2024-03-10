@@ -1,15 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Beamable.Common.Api.Inventory;
 using Beamable.Microservices.SuiFederation.Features.Minting.Models;
 using Beamable.Microservices.SuiFederation.Features.SuiApi.Models;
 using Beamable.Sui.Common.Content;
+using Attribute = Beamable.Microservices.SuiFederation.Features.Minting.Models.Attribute;
 
 namespace Beamable.Microservices.SuiFederation.Features.Minting
 {
     internal static class MetadataConverter
     {
-        public static GameItem ToGameItem(this MintRequestData request, BlockchainItem? contentDefinition)
+        public static GameItem ToGameItem(this MintRequestData request, BlockchainItem? contentDefinition, Dictionary<string, string> properties)
         {
             return new GameItem
             {
@@ -17,12 +19,12 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 Description = contentDefinition?.Description ?? "",
                 ImageURL = contentDefinition?.Url ?? "",
                 ContentName = contentDefinition?.ContentName,
-                // Attributes = contentDefinition?.CustomProperties
-                //     .Select(kv => new Attribute
-                //     {
-                //         Name = kv.Key,
-                //         Value = kv.Value
-                //     }).ToArray()
+                Attributes = (properties != null && properties.Count > 0) ? properties
+                    .Select(kv => new Attribute
+                    {
+                        Name = kv.Key,
+                        Value = kv.Value
+                    }).ToArray() : Array.Empty<Attribute>()
             };
         }
 
@@ -47,6 +49,14 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
 
             if (!string.IsNullOrEmpty(suiObject.image_url))
                 properties.Add(new ItemProperty { name = "Url", value = suiObject.image_url });
+
+            if (suiObject.attributes != null && suiObject.attributes.Any())
+            {
+                foreach (var attr in suiObject.attributes)
+                {
+                    properties.Add(new ItemProperty { name = attr.Name, value = attr.Value });
+                }
+            }
 
             return properties;
         }

@@ -1,25 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Beamable.Content;
+using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.Minting.Models;
 using Beamable.Microservices.SuiFederation.Features.SuiApi;
 using Beamable.Microservices.SuiFederation.Features.Transactions;
 using Beamable.Microservices.SuiFederation.Features.Transactions.Storage.Models;
+using Beamable.Server.Api.Content;
 using Beamable.Sui.Common.Content;
 
 namespace Beamable.Microservices.SuiFederation.Features.Minting
 {
     public class MintingService : IService
     {
-        private readonly ContentService _contentService;
+        private readonly IMicroserviceContentApi _contentService;
         private readonly SuiApiService _suiApiServiceService;
         private readonly TransactionManager _transactionManager;
         private readonly AccountsService _accountsService;
         private readonly ContractProxy _contractProxy;
 
-        public MintingService(ContentService contentService, SuiApiService suiApiServiceService,
+        public MintingService(IMicroserviceContentApi contentService, SuiApiService suiApiServiceService,
             TransactionManager transactionManager, AccountsService accountsService, ContractProxy contractProxy)
         {
             _contentService = contentService;
@@ -48,7 +49,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 {
                     case BlockchainCurrency blockchainCurrency:
                         var currencyItem = request.ToCurrencyItem(blockchainCurrency);
-                        var treasuryCap = await _contractProxy.GetTreasuryCap(currencyItem.Name);
+                        var treasuryCap = await _contractProxy.GetTreasuryCap(request.ContentId);
                         if (treasuryCap is not null)
                         {
                             currencyItem.TreasuryCap = treasuryCap.CapObject;
@@ -57,15 +58,14 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                         }
                         break;
                     case BlockchainItem blockchainItem:
-                        var inventoryItem = request.ToGameItem(blockchainItem);
-                        var gameCap = await _contractProxy.GetGameCap(inventoryItem.ContentName);
+                        var inventoryItem = request.ToGameItem(blockchainItem, request.Properties);
+                        var gameCap = await _contractProxy.GetGameCap(request.ContentId);
                         if (gameCap is not null)
                         {
                             inventoryItem.GameAdminCap = gameCap.CapObject;
                             inventoryItem.PackageId = gameCap.PackageId;
                             mintRequest.GameItems.Add(inventoryItem);
                         }
-
                         break;
                     default:
                         throw new UndefinedItemException(nameof(contentDefinition));

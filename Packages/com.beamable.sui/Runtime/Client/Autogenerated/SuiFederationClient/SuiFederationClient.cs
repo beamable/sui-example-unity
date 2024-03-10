@@ -32,16 +32,6 @@ namespace Beamable.Server.Clients
         }
         
         /// <summary>
-        /// Call the InitializeContract method on the SuiFederation microservice
-        /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.InitializeContract"/>
-        /// </summary>
-        public Beamable.Common.Promise<string> InitializeContract()
-        {
-            System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
-            return this.Request<string>("SuiFederation", "InitializeContract", serializedFields);
-        }
-        
-        /// <summary>
         /// Call the GetRealmAccount method on the SuiFederation microservice
         /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.GetRealmAccount"/>
         /// </summary>
@@ -55,11 +45,11 @@ namespace Beamable.Server.Clients
         /// Call the GetContractAddress method on the SuiFederation microservice
         /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.GetContractAddress"/>
         /// </summary>
-        public Beamable.Common.Promise<string> GetContractAddress(string name)
+        public Beamable.Common.Promise<string> GetContractAddress(string contentId)
         {
-            object raw_name = name;
+            object raw_contentId = contentId;
             System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
-            serializedFields.Add("name", raw_name);
+            serializedFields.Add("contentId", raw_contentId);
             return this.Request<string>("SuiFederation", "GetContractAddress", serializedFields);
         }
     }

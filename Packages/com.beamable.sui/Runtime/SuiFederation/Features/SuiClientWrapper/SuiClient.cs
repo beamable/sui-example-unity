@@ -16,7 +16,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
     public class SuiClient : IService
     {
         private bool _initialized;
-        private const int ProcessTimeoutMs = 5000;
+        private const int ProcessTimeoutMs = 500000;
         private const int FaucetWaitTimeSec = 20;
         private const string WorkingDirectory = "/subapp/move";
         private const string ExecutableAmd64 = "sui-x64-1.18.1";

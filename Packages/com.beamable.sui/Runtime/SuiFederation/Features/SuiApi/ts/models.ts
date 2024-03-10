@@ -1,5 +1,5 @@
 import {SuiParsedData} from "@mysten/sui.js/client";
-import {DisplayFieldsResponse} from "@mysten/sui.js/src/client/types/generated";
+import {DisplayFieldsResponse,MoveValue,MoveStruct} from "@mysten/sui.js/src/client/types/generated";
 
 export class SuiBalance {
     coins: SuiCoinBalance[] = [];
@@ -42,7 +42,23 @@ export class SuiObject {
                 if (displayData != null) {
                     viewObject.name = displayData["name"];
                     viewObject.description = displayData["description"];
-                    viewObject.image_url = displayData["image_url"];
+                    viewObject.image_url = displayData["url"];
+                }
+                const contentFields = this.content?.fields;
+                if (contentFields != null) {
+                    const attributes = (contentFields as { [key: string]: MoveStruct })["attributes"];
+                    if (attributes != undefined) {
+                        if (Array.isArray(attributes)) {
+                            attributes.forEach(a => {
+                                const field = a as { fields: { [key: string]: MoveValue }; type: string; };
+                                if (field != undefined) {
+                                    const name = field.fields["name"] as string;
+                                    const value = field.fields["value"] as string;
+                                    viewObject.addAttribute(name, value);
+                                }
+                            });
+                        }
+                    }
                 }
         }
         return viewObject;
@@ -55,8 +71,14 @@ export class SuiViewObject {
     name: string | undefined;
     description: string | undefined;
     image_url: string | undefined;
+    attributes: Attribute[] = [];
     public constructor(objectId: string) {
         this.objectId = objectId;
+    }
+
+    addAttribute(name: string, value: string): void {
+        const newAttribute: Attribute = { Name: name, Value: value };
+        this.attributes.push(newAttribute);
     }
 }
 
@@ -88,6 +110,7 @@ export interface GameItem {
     ImageURL: string;
     GameAdminCap: string;
     ContentName: string;
+    PackageId: string;
     Attributes: Attribute[]
 }
 
@@ -95,6 +118,7 @@ export interface CurrencyItem {
     Name: string;
     Amount: number;
     TreasuryCap: string;
+    PackageId: string;
 }
 
 export interface  InventoryMintRequest {

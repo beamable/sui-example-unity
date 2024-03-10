@@ -58,6 +58,7 @@ fun init(otw: {{toUpperCase module_name}}, ctx: &mut TxContext) {
 }
 
     public fun update_name(
+        _: &GameAdminCap,
         nft: &mut {{toStructName module_name}},
         new_name: vector<u8>,
         _: &mut TxContext
@@ -66,6 +67,7 @@ fun init(otw: {{toUpperCase module_name}}, ctx: &mut TxContext) {
     }
 
     public fun update_description(
+        _: &GameAdminCap,
         nft: &mut {{toStructName module_name}},
         new_description: vector<u8>,
         _: &mut TxContext
@@ -74,6 +76,7 @@ fun init(otw: {{toUpperCase module_name}}, ctx: &mut TxContext) {
     }
 
     public fun update_url(
+        _: &GameAdminCap,
         nft: &mut {{toStructName module_name}},
         new_url: vector<u8>,
         _: &mut TxContext
@@ -83,6 +86,7 @@ fun init(otw: {{toUpperCase module_name}}, ctx: &mut TxContext) {
 
 {{#each customFields}}
     public fun update_{{this}}(
+        _: &GameAdminCap,
         nft: &mut {{toStructName module_name}},
         new_{{this}}: vector<u8>,
         _: &mut TxContext

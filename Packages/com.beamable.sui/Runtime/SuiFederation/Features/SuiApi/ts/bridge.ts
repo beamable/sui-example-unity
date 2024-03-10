@@ -137,7 +137,7 @@ async function getOwnedObjects(callback: Callback<string>, address: string, pack
     }
     callback(error, JSON.stringify(objects.map(object => object.toView())));
 }
-async function mintInventory(callback: Callback<string>, packageId: string, token: string, items: string, secretKey: string, environment: Environment) {
+async function mintInventory(callback: Callback<string>, token: string, items: string, secretKey: string, environment: Environment) {
     let error = null;
     const result = new SuiTransactionResult();
     try {
@@ -147,7 +147,7 @@ async function mintInventory(callback: Callback<string>, packageId: string, toke
 
         if (mintRequest.CurrencyItems != null) {
             mintRequest.CurrencyItems.forEach((coinItem) => {
-                const coinTarget: `${string}::${string}::${string}` = `${packageId}::${coinItem.Name.toLowerCase()}::mint`;
+                const coinTarget: `${string}::${string}::${string}` = `${coinItem.PackageId}::${coinItem.Name.toLowerCase()}::mint`;
                 txb.moveCall({
                     target: coinTarget,
                     arguments: [
@@ -160,7 +160,7 @@ async function mintInventory(callback: Callback<string>, packageId: string, toke
 
         if (mintRequest.GameItems != null) {
             mintRequest.GameItems.forEach((gameItem) => {
-                const itemTarget: `${string}::${string}::${string}` = `${packageId}::${gameItem.ContentName.toLowerCase()}::create`;
+                const itemTarget: `${string}::${string}::${string}` = `${gameItem.PackageId}::${gameItem.ContentName.toLowerCase()}::create`;
                 txb.moveCall({
                     target: itemTarget,
                     arguments: [

@@ -45,22 +45,22 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
             await _contractCollection.TryInsertContract(contract);
         }
 
-        public async ValueTask<ItemCapData> GetGameCap(string name)
+        public async ValueTask<ItemCapData> GetGameCap(string contractName)
         {
-            var contract = await GetContract(name);
+            var contract = await GetContract(contractName);
             return new ItemCapData
             {
-                CapObject = contract?.GameAdminCaps.SingleOrDefault(x => x.Name == name)?.Id,
+                CapObject = contract?.GameAdminCaps.SingleOrDefault(x => x.Name == contractName.GetContentIdName())?.Id,
                 PackageId = contract?.PackageId
             };
         }
 
-        public async ValueTask<ItemCapData> GetTreasuryCap(string name)
+        public async ValueTask<ItemCapData> GetTreasuryCap(string contractName)
         {
-            var contract = await GetContract(name);
+            var contract = await GetContract(contractName);
             return new ItemCapData
             {
-                CapObject = contract?.TreasuryCaps.SingleOrDefault(x => x.Name == name)?.Id,
+                CapObject = contract?.TreasuryCaps.SingleOrDefault(x => x.Name == contractName.GetContentIdName())?.Id,
                 PackageId = contract?.PackageId
             };
         }

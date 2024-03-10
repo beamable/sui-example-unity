@@ -8,7 +8,7 @@ namespace Beamable.Sui.Common.Content
     /// <summary>
     /// BlockchainItem
     /// </summary>
-    [ContentType(ContentTypeConfiguration.ItemTypeName)]
+    [ContentType("blockchain_item")]
     public class BlockchainItem : ItemContent
     {
         public BlockchainItem()

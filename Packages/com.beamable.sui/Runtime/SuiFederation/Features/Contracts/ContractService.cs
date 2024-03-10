@@ -50,14 +50,15 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
             var manifest = await _contentApi.GetManifest();
             foreach (var clientContentInfo in manifest.entries)
             {
-                if (clientContentInfo.contentId.StartsWith($"items.{ContentTypeConfiguration.ItemTypeName}") ||
-                    clientContentInfo.contentId.StartsWith($"currency.{ContentTypeConfiguration.CurrencyTypeName}"))
+                if (clientContentInfo.contentId.StartsWith("items.blockchain_item") ||
+                    clientContentInfo.contentId.StartsWith("currency.blockchain_currency"))
                 {
                     var contentObject = await _contentApi.GetContent(clientContentInfo.contentId);
                     if (contentObject is BlockchainItem blockchainItem)
                     {
                         var contractData = new ItemModuleData
                         {
+                            contract_name = clientContentInfo.contentId,
                             module_name =  contentObject.Id.GetContentIdName()
                         };
                         await GetOrCreateContract(contractData);
@@ -67,6 +68,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
                         var currency = contentObject as BlockchainCurrency;
                         var contractData = new CurrencyModuleData
                         {
+                            contract_name = clientContentInfo.contentId,
                             module_name =  contentObject.Id.GetContentIdName(),
                             name = currency.Name,
                             symbol = currency.Symbol,
@@ -80,7 +82,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
 
         private async ValueTask<Contract> GetOrCreateContract(IModuleData data)
         {
-            var persistedContract = await _contractProxy.GetContract(data.module_name);
+            var persistedContract = await _contractProxy.GetContract(data.contract_name);
             if (persistedContract is not null)
             {
                 return persistedContract;
@@ -89,7 +91,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
             if (!_initialized)
             {
                 //Install SUI Client compatibility layer
-                ExecCommand.RunSuiClientCompilation();
+                await ExecCommand.RunSuiClientCompilation();
                 _initialized = true;
             }
 
@@ -111,7 +113,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
 
             var contract = new Contract
             {
-                Name = data.module_name,
+                Name = data.contract_name,
                 PackageId = contractDeployOutput.GetPackageId(),
                 GameAdminCaps = contractCaps.GameAdminCaps.Select(c => new CapObject
                 {

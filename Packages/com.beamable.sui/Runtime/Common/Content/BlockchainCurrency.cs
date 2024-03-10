@@ -7,7 +7,7 @@ namespace Beamable.Sui.Common.Content
     /// <summary>
     /// BlockchainCurrency
     /// </summary>
-    [ContentType(ContentTypeConfiguration.CurrencyTypeName)]
+    [ContentType("blockchain_currency")]
     public class BlockchainCurrency : CurrencyContent
     {
         public BlockchainCurrency()

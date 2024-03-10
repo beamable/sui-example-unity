@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper.Exceptions;
 
@@ -7,22 +8,22 @@ namespace Beamable.Microservices.SuiFederation.Features.ExecWrapper
 {
     public static class ExecCommand
     {
-        private const int ProcessTimeoutMs = 10000;
+        private const int ProcessTimeoutMs = 500000;
 
-        public static void RunSdkCompilation()
+        public static async Task RunSdkCompilation()
         {
             try
             {
                 var workingDirectory = "/subapp/sui_ts";
                 BeamableLogger.Log("Running SdkCompilation process...");
-                ExecuteShell("apk add -q icu-data-full",workingDirectory);
+                await ExecuteShell("apk add -q icu-data-full", workingDirectory);
                 BeamableLogger.Log("Installing NodeJS.");
-                ExecuteShell("apk add -q nodejs npm",workingDirectory);
-                ExecuteShell("apk add -q nodejs-current",workingDirectory);
+                await ExecuteShell("apk add -q nodejs npm", workingDirectory);
+                await ExecuteShell("apk add -q nodejs-current", workingDirectory);
                 BeamableLogger.Log("Installing NodeJS modules.");
-                ExecuteShell("npm install -q",workingDirectory);
+                await ExecuteShell("npm install -q",workingDirectory);
                 BeamableLogger.Log("Running NodeJS build.");
-                ExecuteShell("npm run build",workingDirectory);
+                await ExecuteShell("npm run build", workingDirectory);
                 BeamableLogger.Log("Done running SdkCompilation process.");
             }
             catch (Exception e)
@@ -32,20 +33,22 @@ namespace Beamable.Microservices.SuiFederation.Features.ExecWrapper
             }
         }
 
-        public static void RunSuiClientCompilation()
+        public static async Task RunSuiClientCompilation()
         {
             try
             {
                 var workingDirectory = "/subapp/move";
                 BeamableLogger.Log("Running SuiClientCompilation process...");
-                ExecuteShell("cp libs/sgerrand.rsa.pub /etc/apk/keys/sgerrand.rsa.pub",workingDirectory);
-                ExecuteShell("apk add -q libs/glibc-2.35-r1.apk libs/glibc-bin-2.35-r1.apk libs/glibc-i18n-2.35-r1.apk",workingDirectory);
-                ExecuteShell("/usr/glibc-compat/bin/localedef -i en_US -f UTF-8 en_US.UTF-8",workingDirectory);
-                ExecuteShell("apk add -q gcompat",workingDirectory);
-                ExecuteShell("apk add -q git",workingDirectory);
-                ExecuteShell("rm /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6.0.30",workingDirectory);
-                ExecuteShell("cp libs/libstdc++.so.6.0.30 /usr/lib/libstdc++.so.6.0.30",workingDirectory);
-                ExecuteShell("ln -s /usr/lib/libstdc++.so.6.0.30 /usr/lib/libstdc++.so.6",workingDirectory);
+                await ExecuteShell("cp libs/sgerrand.rsa.pub /etc/apk/keys/sgerrand.rsa.pub", workingDirectory);
+                await ExecuteShell(
+                    "apk add -q libs/glibc-2.35-r1.apk libs/glibc-bin-2.35-r1.apk libs/glibc-i18n-2.35-r1.apk",
+                    workingDirectory);
+                await ExecuteShell("/usr/glibc-compat/bin/localedef -i en_US -f UTF-8 en_US.UTF-8", workingDirectory);
+                await ExecuteShell("apk add -q gcompat", workingDirectory);
+                await ExecuteShell("apk add -q git", workingDirectory);
+                await ExecuteShell("rm /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6.0.30", workingDirectory);
+                await ExecuteShell("cp libs/libstdc++.so.6.0.30 /usr/lib/libstdc++.so.6.0.30", workingDirectory);
+                await ExecuteShell("ln -s /usr/lib/libstdc++.so.6.0.30 /usr/lib/libstdc++.so.6", workingDirectory);
                 BeamableLogger.Log("Done running SuiClientCompilation process.");
             }
             catch (Exception e)
@@ -55,12 +58,12 @@ namespace Beamable.Microservices.SuiFederation.Features.ExecWrapper
             }
         }
 
-        private static void ExecuteShell(string command, string workingDirectory = null)
+        private static async Task ExecuteShell(string command, string workingDirectory = null)
         {
-            Execute("/bin/sh", $"-c \"{command}\"", workingDirectory);
+            await Execute("/bin/sh", $"-c \"{command}\"", workingDirectory);
         }
 
-        private static void Execute(string program, string args, string workingDirectory = null)
+        private static async Task Execute(string program, string args, string workingDirectory = null)
         {
             using var process = new Process();
             process.StartInfo =

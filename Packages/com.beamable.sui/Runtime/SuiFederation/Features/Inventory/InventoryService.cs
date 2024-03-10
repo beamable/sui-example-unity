@@ -6,18 +6,16 @@ using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.Inventory.Models;
 using Beamable.Microservices.SuiFederation.Features.Minting;
 using Beamable.Microservices.SuiFederation.Features.SuiApi;
-using Beamable.Sui.Common.Content;
-
 namespace Beamable.Microservices.SuiFederation.Features.Inventory
 {
     public class InventoryService : IService
     {
-        private readonly SuiApiService suiApiService;
+        private readonly SuiApiService _suiApiService;
         private readonly ContractProxy _contractProxy;
 
         public InventoryService(SuiApiService suiApiService, ContractProxy contractProxy)
         {
-            this.suiApiService = suiApiService;
+            _suiApiService = suiApiService;
             _contractProxy = contractProxy;
         }
 
@@ -38,8 +36,8 @@ namespace Beamable.Microservices.SuiFederation.Features.Inventory
                 }
             }
 
-            var coinBalance = await suiApiService.GetBalance(id, currencyRequest);
-            var suiObjects = await suiApiService.GetOwnedObjects(id, contracts.Select(c => c.PackageId).ToArray());
+            var coinBalance = await _suiApiService.GetBalance(id, currencyRequest);
+            var suiObjects = await _suiApiService.GetOwnedObjects(id, contracts.Select(c => c.PackageId).ToArray());
 
             var items = new List<(string, FederatedItemProxy)>();
             var currencies = coinBalance.coins?.ToDictionary(coin => GetCurrencyContenId(coin.coinType), coin => coin.total);
@@ -68,12 +66,12 @@ namespace Beamable.Microservices.SuiFederation.Features.Inventory
 
         private string GetItemContenId(string itemName)
         {
-            return $"items.{ContentTypeConfiguration.ItemTypeName}.{itemName}";
+            return $"items.blockchain_currency.{itemName}";
         }
 
         private string GetCurrencyContenId(string currencyName)
         {
-            return $"currency.{ContentTypeConfiguration.ItemTypeName}.{currencyName}";
+            return $"currency.blockchain_currency.{currencyName}";
         }
     }
 }

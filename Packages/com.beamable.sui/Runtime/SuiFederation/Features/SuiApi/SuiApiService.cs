@@ -133,13 +133,12 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
                 try
                 {
                     var environment = Configuration.SuiEnvironment;
-                    var packageId = "";
                     var secretKey = account.PrivateKey;
                     var mintRequestJson = JsonConvert.SerializeObject(request);
                     var result = await StaticNodeJSService.InvokeFromFileAsync<string>(
                         BridgeModulePath,
                         "mintInventory",
-                        new object[] { packageId, token, mintRequestJson, secretKey, environment });
+                        new object[] { token, mintRequestJson, secretKey, environment });
                     return JsonConvert.DeserializeObject<SuiTransactionResult>(result);
                 }
                 catch (Exception ex)
