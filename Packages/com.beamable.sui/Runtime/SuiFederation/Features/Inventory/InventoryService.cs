@@ -3,8 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
+using Beamable.Microservices.SuiFederation.Features.Inventory.Models;
 using Beamable.Microservices.SuiFederation.Features.Minting;
 using Beamable.Microservices.SuiFederation.Features.SuiApi;
+using Beamable.Sui.Common.Content;
 
 namespace Beamable.Microservices.SuiFederation.Features.Inventory
 {
@@ -21,9 +23,23 @@ namespace Beamable.Microservices.SuiFederation.Features.Inventory
 
         public async Task<FederatedInventoryProxyState> GetInventoryState(string id)
         {
-            var contract = await _contractProxy.GetDefaultContract();
-            var coinBalance = await suiApiService.GetBalance(id, contract.TreasuryCaps.Select(x => x.Name).ToArray(), contract.PackageId);
-            var suiObjects = await suiApiService.GetOwnedObjects(id, contract.PackageId);
+            var contracts = await _contractProxy.GetContracts();
+
+            var currencyRequest = new CurrencyRequest();
+            foreach (var contract in contracts)
+            {
+                if (contract.TreasuryCaps is not null)
+                {
+                    currencyRequest.CurrencyModules.Add(new CurrencyModule
+                    {
+                        PackageId = contract.PackageId,
+                        ModuleNames = contract.TreasuryCaps.Select(t => t.Name).ToList()
+                    });
+                }
+            }
+
+            var coinBalance = await suiApiService.GetBalance(id, currencyRequest);
+            var suiObjects = await suiApiService.GetOwnedObjects(id, contracts.Select(c => c.PackageId).ToArray());
 
             var items = new List<(string, FederatedItemProxy)>();
             var currencies = coinBalance.coins?.ToDictionary(coin => GetCurrencyContenId(coin.coinType), coin => coin.total);
@@ -52,12 +68,12 @@ namespace Beamable.Microservices.SuiFederation.Features.Inventory
 
         private string GetItemContenId(string itemName)
         {
-            return $"items.blockchain_item.{itemName}";
+            return $"items.{ContentTypeConfiguration.ItemTypeName}.{itemName}";
         }
 
         private string GetCurrencyContenId(string currencyName)
         {
-            return $"currency.blockchain_currency.{currencyName}";
+            return $"currency.{ContentTypeConfiguration.ItemTypeName}.{currencyName}";
         }
     }
 }

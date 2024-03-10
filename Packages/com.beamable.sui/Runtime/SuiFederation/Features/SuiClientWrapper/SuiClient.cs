@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Beamable.Common;
@@ -11,29 +13,41 @@ using Newtonsoft.Json;
 
 namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
 {
-    public static class SuiClient
+    public class SuiClient : IService
     {
-        private static bool _initialized;
+        private bool _initialized;
         private const int ProcessTimeoutMs = 5000;
         private const int FaucetWaitTimeSec = 20;
         private const string WorkingDirectory = "/subapp/move";
         private const string ExecutableAmd64 = "sui-x64-1.18.1";
         private const string ExecutableArm64 = "sui-arm64-1.18.1";
 
-        public static async Task<MoveDeployOutput> Compile(Account realmAccount)
+        public async Task<MoveDeployOutput> Compile(string moduleName, Account realmAccount)
         {
             await Initialize(realmAccount);
 
-            BeamableLogger.Log("Compiling smart contract...");
-            await Execute(GetExecutable(), $"move build", ignoreOutput: true);
-            BeamableLogger.Log("Deploying smart contract...");
-            var deployOutputData = await Execute(GetExecutable(), $"client --client.config client.yaml publish --silence-warnings --json --gas-budget 50000000 sources/default.move", ignoreOutputError: true);
-            var deployOutput = JsonConvert.DeserializeObject<MoveDeployOutput>(deployOutputData);
-            BeamableLogger.Log($"Deploy output package {deployOutput.GetPackageId()}");
-            return deployOutput;
+            try
+            {
+                BeamableLogger.Log($"Compiling smart contract for {moduleName}...");
+                await Execute(GetExecutable(), $"move build --skip-fetch-latest-git-deps", ignoreOutput: true);
+                BeamableLogger.Log($"Deploying smart contract for {moduleName}...");
+                var deployOutputData = await Execute(GetExecutable(),
+                    $"client --client.config client.yaml publish --silence-warnings --json --gas-budget 50000000 --skip-fetch-latest-git-deps ./sources/{moduleName}.move",
+                    ignoreOutputError: true);
+                var deployOutput = JsonConvert.DeserializeObject<MoveDeployOutput>(deployOutputData);
+                BeamableLogger.Log($"Deploy output package {deployOutput.GetPackageId()}");
+                return deployOutput;
+            }
+            finally
+            {
+                await ExecuteShell("rm -r build", WorkingDirectory);
+                await ExecuteShell($"rm sources/{moduleName}.move", WorkingDirectory);
+            }
+
+
         }
 
-        private static async ValueTask Initialize(Account realmAccount)
+        private async ValueTask Initialize(Account realmAccount)
         {
             if (!_initialized)
             {
@@ -52,10 +66,17 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
 
                 if (Configuration.SuiEnvironment == "devnet")
                 {
-                    BeamableLogger.Log($"Requesting faucet coins, waiting {FaucetWaitTimeSec} sec...");
-                    await Execute(GetExecutable(), $"client --client.config client.yaml faucet");
-                    await Task.Delay(TimeSpan.FromSeconds(FaucetWaitTimeSec));
-                    BeamableLogger.Log("Done requesting faucet coins.");
+                    var balanceJson = await Execute(GetExecutable(), $"client --client.config client.yaml gas --json", ignoreOutputError: true);
+                    List<GasBalanceItem> gasBalances = JsonConvert.DeserializeObject<List<GasBalanceItem>>(balanceJson);
+                    var balance = gasBalances.Sum(b => b.GasBalance);
+                    BeamableLogger.Log($"Gas balance is {balance}.");
+                    if (balance < 100000)
+                    {
+                        BeamableLogger.Log($"Requesting faucet coins, waiting {FaucetWaitTimeSec} sec...");
+                        await Execute(GetExecutable(), $"client --client.config client.yaml faucet");
+                        await Task.Delay(TimeSpan.FromSeconds(FaucetWaitTimeSec));
+                        BeamableLogger.Log("Done requesting faucet coins.");
+                    }
                 }
                 _initialized = true;
             }

@@ -55,15 +55,22 @@ namespace Beamable.Server.Clients
         /// Call the GetContractAddress method on the SuiFederation microservice
         /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.GetContractAddress"/>
         /// </summary>
-        public Beamable.Common.Promise<string> GetContractAddress()
+        public Beamable.Common.Promise<string> GetContractAddress(string name)
         {
+            object raw_name = name;
             System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
+            serializedFields.Add("name", raw_name);
             return this.Request<string>("SuiFederation", "GetContractAddress", serializedFields);
         }
     }
     
     internal sealed class MicroserviceParametersSuiFederationClient
     {
+        
+        [System.SerializableAttribute()]
+        internal sealed class ParameterSystem_String : MicroserviceClientDataWrapper<string>
+        {
+        }
     }
     
     [BeamContextSystemAttribute()]

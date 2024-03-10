@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Beamable.Common;
 using Beamable.Microservices.SuiFederation.Features.Accounts.Models;
-using Beamable.Microservices.SuiFederation.Features.Contracts.Storage.Models;
+using Beamable.Microservices.SuiFederation.Features.Inventory.Models;
 using Beamable.Microservices.SuiFederation.Features.Minting.Models;
 using Beamable.Microservices.SuiFederation.Features.SuiApi.Exceptions;
 using Beamable.Microservices.SuiFederation.Features.SuiApi.Models;
@@ -55,17 +55,18 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
             }
         }
 
-        public async Task<SuiBalance> GetBalance(string address, string[] coinModules, string packageId)
+        public async Task<SuiBalance> GetBalance(string address, CurrencyRequest request)
         {
-            using (new Measure($"Sui.GetBalance: {address} for -> {string.Join(',', coinModules)}"))
+            using (new Measure($"Sui.GetBalance for: {address}"))
             {
                 try
                 {
                     var environment = Configuration.SuiEnvironment;
+                    var currencyRequestJson = JsonConvert.SerializeObject(request);
                     var response = await StaticNodeJSService.InvokeFromFileAsync<string>(
                         BridgeModulePath,
                         "getBalance",
-                        new object[] { address, packageId, coinModules, environment });
+                        new object[] { address, currencyRequestJson, environment });
                     return JsonConvert.DeserializeObject<SuiBalance>(response);
                 }
                 catch (Exception ex)
@@ -76,7 +77,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
             }
         }
 
-        public async Task<IEnumerable<SuiObject>> GetOwnedObjects(string address, string packageId)
+        public async Task<IEnumerable<SuiObject>> GetOwnedObjects(string address, string[] packageIds)
         {
             using (new Measure($"Sui.GetOwnedObjects: {address}"))
             {
@@ -86,7 +87,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
                     var result = await StaticNodeJSService.InvokeFromFileAsync<string>(
                         BridgeModulePath,
                         "getOwnedObjects",
-                        new object[] { address, packageId, environment });
+                        new object[] { address, packageIds, environment });
 
                     return JsonConvert.DeserializeObject<IEnumerable<SuiObject>>(result);
                 }
@@ -124,7 +125,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
         //     }
         // }
 
-        public async Task<SuiTransactionResult> MintInventoryItems(string token, InventoryMintRequest request, Contract contract, Account account)
+        public async Task<SuiTransactionResult> MintInventoryItems(string token, InventoryMintRequest request, Account account)
         {
             using (new Measure(
                        $"Sui.MintInventoryItems: for {token} -> {string.Join(',', request.GameItems.Select(x => x.Name))} -> Currency: {string.Join(',', request.CurrencyItems.Select(x => x.Name))}"))
@@ -132,7 +133,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiApi
                 try
                 {
                     var environment = Configuration.SuiEnvironment;
-                    var packageId = contract.PackageId;
+                    var packageId = "";
                     var secretKey = account.PrivateKey;
                     var mintRequestJson = JsonConvert.SerializeObject(request);
                     var result = await StaticNodeJSService.InvokeFromFileAsync<string>(

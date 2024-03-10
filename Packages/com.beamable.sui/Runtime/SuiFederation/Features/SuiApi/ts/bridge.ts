@@ -4,6 +4,7 @@ import { fromHEX, SUI_FRAMEWORK_ADDRESS, fromB64 } from '@mysten/sui.js/utils';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import {
+    CurrencyRequest,
     InventoryMintRequest,
     SuiBalance,
     SuiCapObject,
@@ -66,62 +67,70 @@ async function verifySignature(callback: Callback<boolean>, token: string, chall
     }
     callback(error, isValid);
 }
-async function getBalance(callback: Callback<string>, address: string, packageId: string, coinModules: string[], environment: Environment) {
+async function getBalance(callback: Callback<string>, address: string, items: string, environment: Environment) {
     let error = null;
     let suiBalance = new SuiBalance();
     try {
         const suiClient = new SuiClient({url: getFullnodeUrl(environment)});
-        for (const coin of coinModules) {
-            const coinBalance = await suiClient.getBalance({
-                owner: address,
-                coinType: `${packageId}::${coin.toLowerCase()}::${coin.toUpperCase()}`
-            });
-            suiBalance.coins.push(new SuiCoinBalance(coin, Number.parseInt(coinBalance.totalBalance)));
+        const request: CurrencyRequest = JSON.parse(items);
+
+        if (request.CurrencyModules != undefined) {
+            for (const module of request.CurrencyModules) {
+                for (const coin of module.ModuleNames) {
+                    const coinBalance = await suiClient.getBalance({
+                        owner: address,
+                        coinType: `${module.PackageId}::${coin.toLowerCase()}::${coin.toUpperCase()}`
+                    });
+                    suiBalance.coins.push(new SuiCoinBalance(coin, Number.parseInt(coinBalance.totalBalance)));
+                }
+            }
         }
     } catch (ex) {
         error = ex;
     }
     callback(error, JSON.stringify(suiBalance));
 }
-async function getOwnedObjects(callback: Callback<string>, address: string, packageId: string, environment: Environment) {
+async function getOwnedObjects(callback: Callback<string>, address: string, packageIds: string[], environment: Environment) {
     let error = null;
     const objects: SuiObject[] = [];
     try {
         const suiClient = new SuiClient({url: getFullnodeUrl(environment)});
 
-        const inputParams: GetOwnedObjectsParams = {
-            owner: address,
-            cursor: null,
-            options: {
-                showType: true,
-                showContent: true,
-                showDisplay: true
-            },
-            filter: {
-                Package: packageId
-            }
-        };
-
-        const handleData = async (input: GetOwnedObjectsParams) => {
-            return await suiClient.getOwnedObjects(input);
-        };
-
-        const results = await retrievePaginatedData<GetOwnedObjectsParams, PaginatedObjectsResponse>(handleData, inputParams);
-
-        results.forEach(result => {
-            result.data.forEach(element => {
-                if (element.data != undefined)  {
-                    const suiObject = new SuiObject(
-                        element.data.objectId,
-                        element.data.digest,
-                        element.data.version,
-                        element.data.content,
-                        element.data.display
-                    );
-                    objects.push(suiObject);
+        for (const packageId of packageIds) {
+            const inputParams: GetOwnedObjectsParams = {
+                owner: address,
+                cursor: null,
+                options: {
+                    showType: true,
+                    showContent: true,
+                    showDisplay: true
+                },
+                filter: {
+                    Package: packageId
                 }
-            });
-        })
+            };
+
+            const handleData = async (input: GetOwnedObjectsParams) => {
+                return await suiClient.getOwnedObjects(input);
+            };
+
+            const results = await retrievePaginatedData<GetOwnedObjectsParams, PaginatedObjectsResponse>(handleData, inputParams);
+
+            results.forEach(result => {
+                result.data.forEach(element => {
+                    if (element.data != undefined)  {
+                        const suiObject = new SuiObject(
+                            element.data.objectId,
+                            element.data.digest,
+                            element.data.version,
+                            element.data.content,
+                            element.data.display
+                        );
+                        objects.push(suiObject);
+                    }
+                });
+            })
+        }
 
     } catch (ex) {
         error = ex;

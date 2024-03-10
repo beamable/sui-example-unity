@@ -1,6 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Storage.Models;
 using Beamable.Server;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Beamable.Microservices.SuiFederation.Features.Contracts.Storage
@@ -36,6 +38,12 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts.Storage
         {
             var collection = await Get();
             return await collection.Find(x => x.Name == name).FirstOrDefaultAsync();
+        }
+
+        public async Task<List<Contract>> GetContracts()
+        {
+            var collection = await Get();
+            return await collection.Find(new BsonDocument()).ToListAsync();
         }
 
         public async Task SaveContract(Contract contract)

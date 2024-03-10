@@ -12,10 +12,10 @@ namespace Beamable.Microservices.SuiFederation.Endpoints
             _contractProxy = contractProxy;
         }
 
-        public async Task<string> GetContractAddress()
+        public async Task<string> GetContractAddress(string name)
         {
-            var contract = await _contractProxy.GetDefaultContract();
-            return contract.PackageId;
+            var contract = await _contractProxy.GetContract(name);
+            return contract?.PackageId;
         }
     }
 }

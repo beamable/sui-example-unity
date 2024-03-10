@@ -15,14 +15,14 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
             {
                 Name = contentDefinition?.Name ?? request.ContentId,
                 Description = contentDefinition?.Description ?? "",
-                ImageURL = contentDefinition?.Image ?? "",
+                ImageURL = contentDefinition?.Url ?? "",
                 ContentName = contentDefinition?.ContentName,
-                Attributes = contentDefinition?.CustomProperties
-                    .Select(kv => new Attribute
-                    {
-                        Name = kv.Key,
-                        Value = kv.Value
-                    }).ToArray()
+                // Attributes = contentDefinition?.CustomProperties
+                //     .Select(kv => new Attribute
+                //     {
+                //         Name = kv.Key,
+                //         Value = kv.Value
+                //     }).ToArray()
             };
         }
 
@@ -46,7 +46,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 properties.Add(new ItemProperty { name = "Description", value = suiObject.description });
 
             if (!string.IsNullOrEmpty(suiObject.image_url))
-                properties.Add(new ItemProperty { name = "ImageURL", value = suiObject.image_url });
+                properties.Add(new ItemProperty { name = "Url", value = suiObject.image_url });
 
             return properties;
         }

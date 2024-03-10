@@ -51,17 +51,18 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                         var treasuryCap = await _contractProxy.GetTreasuryCap(currencyItem.Name);
                         if (treasuryCap is not null)
                         {
-                            currencyItem.TreasuryCap = treasuryCap;
+                            currencyItem.TreasuryCap = treasuryCap.CapObject;
+                            currencyItem.PackageId = treasuryCap.PackageId;
                             mintRequest.CurrencyItems.Add(currencyItem);
                         }
-
                         break;
                     case BlockchainItem blockchainItem:
                         var inventoryItem = request.ToGameItem(blockchainItem);
                         var gameCap = await _contractProxy.GetGameCap(inventoryItem.ContentName);
                         if (gameCap is not null)
                         {
-                            inventoryItem.GameAdminCap = gameCap;
+                            inventoryItem.GameAdminCap = gameCap.CapObject;
+                            inventoryItem.PackageId = gameCap.PackageId;
                             mintRequest.GameItems.Add(inventoryItem);
                         }
 
@@ -71,10 +72,9 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 }
             }
 
-            var contract = await _contractProxy.GetDefaultContract();
             var account = await _accountsService.GetOrCreateRealmAccount();
 
-            var result = await _suiApiServiceService.MintInventoryItems(toWalletAddress, mintRequest, contract, account);
+            var result = await _suiApiServiceService.MintInventoryItems(toWalletAddress, mintRequest, account);
             if (result.error is null)
             {
                 await _transactionManager.MarkConfirmed(inventoryTransactionId);

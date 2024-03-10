@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Beamable.Common.Content;
 using Beamable.Common.Inventory;
 using Newtonsoft.Json;
@@ -9,13 +8,25 @@ namespace Beamable.Sui.Common.Content
     /// <summary>
     /// BlockchainItem
     /// </summary>
-    [ContentType("blockchain_item")]
+    [ContentType(ContentTypeConfiguration.ItemTypeName)]
     public class BlockchainItem : ItemContent
     {
+        public BlockchainItem()
+        {
+            federation = new OptionalFederation
+            {
+                HasValue = true,
+                Value = new Federation
+                {
+                    Service = "SuiFederation",
+                    Namespace = "sui"
+                }
+            };
+        }
+
         [SerializeField] private string _name;
+        [SerializeField] private string _url;
         [SerializeField][TextArea(10, 10)] private string _description;
-        [SerializeField] private string _image;
-        [SerializeField] private SerializableDictionaryStringToString _customProperties;
 
         /// <summary>
         /// NFT name
@@ -23,19 +34,14 @@ namespace Beamable.Sui.Common.Content
         public string Name => _name;
 
         /// <summary>
+        /// NFT image
+        /// </summary>
+        public string Url => _url;
+
+        /// <summary>
         /// NFT description
         /// </summary>
         public string Description => _description;
-
-        /// <summary>
-        /// NFT image
-        /// </summary>
-        public string Image => _image;
-
-        /// <summary>
-        /// NFT custom properties
-        /// </summary>
-        public IDictionary<string, string> CustomProperties => _customProperties;
 
         /// <summary>
         /// Creates a JSON string that represents the NFT metadata
@@ -47,8 +53,7 @@ namespace Beamable.Sui.Common.Content
             {
                 Name,
                 Description,
-                Image,
-                CustomProperties
+                Url
             };
             return JsonConvert.SerializeObject(metadata);
         }

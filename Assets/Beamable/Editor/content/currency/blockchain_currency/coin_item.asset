@@ -26,3 +26,6 @@ MonoBehaviour:
     Value:
       Service: SuiFederation
       Namespace: sui
+  _name: coin_name
+  _symbol: CN
+  _description: Custom coin

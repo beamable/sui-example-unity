@@ -119,3 +119,12 @@ export class SuiCapObjects {
     GameAdminCaps: SuiCapObject[] = [];
     TreasuryCaps: SuiCapObject[] = [];
 }
+
+export interface  CurrencyRequest {
+    CurrencyModules: CurrencyModule[] | undefined;
+}
+
+export interface CurrencyModule {
+    PackageId: string;
+    ModuleNames: string[];
+}

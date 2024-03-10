@@ -6,6 +6,7 @@ using Beamable.Common.Api.Inventory;
 using Beamable.Microservices.SuiFederation.Endpoints;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
+using Beamable.Microservices.SuiFederation.Features.Contracts.Models;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
 using Beamable.Sui.Common;
 using Beamable.Server;
@@ -48,28 +49,14 @@ namespace Beamable.Microservices.SuiFederation
                 //Load or create realm account
                 await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
 
-                //Load or create default contract
-                await initializer.GetService<ContractService>().GetOrCreateDefaultContract();
+                //Load or create contracts
+                await initializer.GetService<ContractService>().InitializeContentContracts();
             }
             catch (Exception ex)
             {
                 BeamableLogger.LogException(ex);
                 BeamableLogger.LogWarning("Service initialization failed. Please fix the issues before using the service.");
             }
-        }
-
-        [ClientCallable]
-        public async Promise<string> InitializeContract()
-        {
-            // Validate configuration
-            if (string.IsNullOrEmpty(Configuration.SuiEnvironment))
-            {
-                throw new ConfigurationException($"{nameof(Configuration.SuiEnvironment)} is not defined in realm config. Please apply the configuration and restart the service to make it operational.");
-            }
-
-            var contract = await Provider.GetService<ContractService>()
-                .GetOrCreateDefaultContract();
-            return contract.PackageId;
         }
 
         [ClientCallable]
@@ -81,10 +68,10 @@ namespace Beamable.Microservices.SuiFederation
         }
 
         [ClientCallable]
-        public async Promise<string> GetContractAddress()
+        public async Promise<string> GetContractAddress(string contentId)
         {
             return await Provider.GetService<GetContractAddressEndpoint>()
-                .GetContractAddress();
+                .GetContractAddress(contentId);
         }
 
         public async Promise<FederatedAuthenticationResponse> Authenticate(string token, string challenge, string solution)

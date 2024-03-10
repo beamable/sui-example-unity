@@ -6,7 +6,6 @@ using Beamable.Microservices.SuiFederation.Features.Accounts.Storage;
 using Beamable.Microservices.SuiFederation.Features.Accounts.Storage.Models;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.SuiApi;
-using Beamable.Microservices.SuiFederation.Features.SuiApi.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Rijndael256;
@@ -22,8 +21,6 @@ namespace Beamable.Microservices.SuiFederation.Features.Accounts
         private readonly VaultCollection _vaultCollection;
         private Account? _cachedRealmAccount;
         private readonly MemoryCache _accountCache = new(Options.Create(new MemoryCacheOptions()));
-
-        private SuiCapObjects _capObjects = new();
 
         public AccountsService(VaultCollection vaultCollection, SuiApiService suiApiServiceService, ContractProxy contractProxy)
         {
