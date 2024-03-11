@@ -66,7 +66,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Inventory
 
         private string GetItemContenId(string itemName)
         {
-            return $"items.blockchain_currency.{itemName}";
+            return $"items.blockchain_item.{itemName}";
         }
 
         private string GetCurrencyContenId(string currencyName)
