@@ -18,7 +18,7 @@ MonoBehaviour:
     Archived: 0
     TemplateId: small
     CustomDockerFileStrings: 
-    IncludeDebugTools: 0
+    IncludeDebugTools: 1
     DebugData:
       Username: root
       Password: Password!
@@ -49,7 +49,7 @@ MonoBehaviour:
     LocalInitPass: beamable
   - StorageName: SuiStorage
     StorageType: mongov1
-    Enabled: 0
+    Enabled: 1
     Archived: 0
     TemplateId: small
     LocalDataPort: 12101
@@ -69,31 +69,9 @@ MonoBehaviour:
       - Unity.Beamable
       - Beamable.SmallerJSON
       - Unity.Beamable.Server.Runtime.Common
-      - Unity.Beamable.Server.Runtime.Mocks
       - Unity.Beamable.Sui.Common
       - Beamable.Storage.SuiStorage
       DllReferences:
-      - Nethereum.Web3.dll
-      - Nethereum.JsonRpc.Client.dll
-      - Nethereum.Contracts.dll
-      - Microsoft.Extensions.Logging.Abstractions.dll
-      - Nethereum.RPC.dll
-      - Nethereum.ABI.dll
-      - Nethereum.Accounts.dll
-      - Nethereum.BlockchainProcessing.dll
-      - Nethereum.Hex.dll
-      - Nethereum.Model.dll
-      - Nethereum.RLP.dll
-      - Nethereum.Signer.dll
-      - Nethereum.Util.dll
-      - BouncyCastle.Crypto.dll
-      - Nethereum.Merkle.Patricia.dll
-      - Nethereum.Signer.EIP712.dll
-      - Nethereum.KeyStore.dll
-      - Nethereum.JsonRpc.RpcClient.dll
-      - Newtonsoft.Json.dll
-      - Stubble.Core.dll
-      - System.Collections.Immutable.dll
       - DnsClient.dll
       - MongoDB.Bson.dll
       - MongoDB.Driver.Core.dll
@@ -102,10 +80,26 @@ MonoBehaviour:
       - System.Buffers.dll
       - System.Runtime.CompilerServices.Unsafe.dll
       - SharpCompress.dll
+      - Newtonsoft.Json.dll
+      - Microsoft.Extensions.Caching.Abstractions.dll
+      - Microsoft.Extensions.Caching.Memory.dll
+      - Microsoft.Extensions.Logging.dll
+      - Microsoft.Extensions.Primitives.dll
+      - Rijndael256.dll
+      - Jering.Javascript.NodeJS.dll
+      - Microsoft.Extensions.DependencyInjection.dll
+      - Microsoft.Bcl.AsyncInterfaces.dll
+      - Microsoft.Extensions.DependencyInjection.Abstractions.dll
+      - Microsoft.Extensions.Http.dll
+      - Microsoft.Extensions.Logging.Abstractions.dll
+      - Microsoft.Extensions.Options.dll
+      - Microsoft.Extensions.Hosting.Abstractions.dll
+      - Microsoft.Extensions.Configuration.Abstractions.dll
+      - Handlebars.dll
       Location: Packages/com.beamable.sui/Runtime/SuiFederation/Beamable.Microservice.SuiFederation.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: 1EAA33905014C26B756214FF032BB80D
+    Checksum: 29559D53C777673E3635542D60F55CE5
   - ServiceName: SuiStorage
     CodeClass: 2
     CodeDirectory: Packages\com.beamable.sui\Runtime\StorageObjects\SuiStorage
@@ -132,7 +126,7 @@ MonoBehaviour:
       Location: Packages/com.beamable.sui/Runtime/StorageObjects/SuiStorage/Beamable.Storage.SuiStorage.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: AAB9ED8FCC9785EADF4370A7743E1279
+    Checksum: 44F15BC84DEC1469369E07065AC089A2
   - ServiceName: Unity.Beamable.Sui.Common
     CodeClass: 3
     CodeDirectory: Packages\com.beamable.sui\Runtime\Common
@@ -149,7 +143,7 @@ MonoBehaviour:
       Location: Packages/com.beamable.sui/Runtime/Common/Unity.Beamable.Sui.Common.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: 224B3DB3135B46AE6043B2111A467942
+    Checksum: CB9942D570E5FD95C2E02955A33F3EE0
   LastBuiltDockerImagesCodeHandles:
   - ServiceName: FederationMicroservice
     CodeClass: 1
@@ -254,31 +248,9 @@ MonoBehaviour:
       - Unity.Beamable
       - Beamable.SmallerJSON
       - Unity.Beamable.Server.Runtime.Common
-      - Unity.Beamable.Server.Runtime.Mocks
       - Unity.Beamable.Sui.Common
       - Beamable.Storage.SuiStorage
       DllReferences:
-      - Nethereum.Web3.dll
-      - Nethereum.JsonRpc.Client.dll
-      - Nethereum.Contracts.dll
-      - Microsoft.Extensions.Logging.Abstractions.dll
-      - Nethereum.RPC.dll
-      - Nethereum.ABI.dll
-      - Nethereum.Accounts.dll
-      - Nethereum.BlockchainProcessing.dll
-      - Nethereum.Hex.dll
-      - Nethereum.Model.dll
-      - Nethereum.RLP.dll
-      - Nethereum.Signer.dll
-      - Nethereum.Util.dll
-      - BouncyCastle.Crypto.dll
-      - Nethereum.Merkle.Patricia.dll
-      - Nethereum.Signer.EIP712.dll
-      - Nethereum.KeyStore.dll
-      - Nethereum.JsonRpc.RpcClient.dll
-      - Newtonsoft.Json.dll
-      - Stubble.Core.dll
-      - System.Collections.Immutable.dll
       - DnsClient.dll
       - MongoDB.Bson.dll
       - MongoDB.Driver.Core.dll
@@ -287,10 +259,26 @@ MonoBehaviour:
       - System.Buffers.dll
       - System.Runtime.CompilerServices.Unsafe.dll
       - SharpCompress.dll
+      - Newtonsoft.Json.dll
+      - Microsoft.Extensions.Caching.Abstractions.dll
+      - Microsoft.Extensions.Caching.Memory.dll
+      - Microsoft.Extensions.Logging.dll
+      - Microsoft.Extensions.Primitives.dll
+      - Rijndael256.dll
+      - Jering.Javascript.NodeJS.dll
+      - Microsoft.Extensions.DependencyInjection.dll
+      - Microsoft.Bcl.AsyncInterfaces.dll
+      - Microsoft.Extensions.DependencyInjection.Abstractions.dll
+      - Microsoft.Extensions.Http.dll
+      - Microsoft.Extensions.Logging.Abstractions.dll
+      - Microsoft.Extensions.Options.dll
+      - Microsoft.Extensions.Hosting.Abstractions.dll
+      - Microsoft.Extensions.Configuration.Abstractions.dll
+      - Handlebars.dll
       Location: Packages/com.beamable.sui/Runtime/SuiFederation/Beamable.Microservice.SuiFederation.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: 1EAA33905014C26B756214FF032BB80D
+    Checksum: 29559D53C777673E3635542D60F55CE5
   - ServiceName: Unity.Beamable.Sui.Common
     CodeClass: 3
     CodeDirectory: Packages\com.beamable.sui\Runtime\Common
@@ -307,7 +295,7 @@ MonoBehaviour:
       Location: Packages/com.beamable.sui/Runtime/Common/Unity.Beamable.Sui.Common.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: 224B3DB3135B46AE6043B2111A467942
+    Checksum: CB9942D570E5FD95C2E02955A33F3EE0
   - ServiceName: SuiStorage
     CodeClass: 2
     CodeDirectory: Packages\com.beamable.sui\Runtime\StorageObjects\SuiStorage
@@ -334,7 +322,7 @@ MonoBehaviour:
       Location: Packages/com.beamable.sui/Runtime/StorageObjects/SuiStorage/Beamable.Storage.SuiStorage.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: AAB9ED8FCC9785EADF4370A7743E1279
+    Checksum: 44F15BC84DEC1469369E07065AC089A2
   CustomContainerPrefix: 
   AutoReferenceContent: 0
   AutoBuildCommonAssembly: 1

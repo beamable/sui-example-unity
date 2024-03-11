@@ -7,8 +7,8 @@ using Beamable.Microservices.SuiFederation.Endpoints;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
+using Beamable.Microservices.SuiFederation.Features.DistributedLock;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
-using Beamable.Microservices.SuiFederation.Features.Inventory;
 using Beamable.Sui.Common;
 using Beamable.Server;
 using Beamable.Server.Api.RealmConfig;
@@ -65,6 +65,7 @@ namespace Beamable.Microservices.SuiFederation
 
             //Load or create contracts
             await initializer.GetService<ContractService>().InitializeContentContracts();
+
             _initialized = true;
         }
 
