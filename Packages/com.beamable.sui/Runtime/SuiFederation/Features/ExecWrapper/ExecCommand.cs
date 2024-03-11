@@ -21,9 +21,9 @@ namespace Beamable.Microservices.SuiFederation.Features.ExecWrapper
                 await ExecuteShell("apk add -q nodejs npm", workingDirectory);
                 await ExecuteShell("apk add -q nodejs-current", workingDirectory);
                 BeamableLogger.Log("Installing NodeJS modules.");
-                await ExecuteShell("npm install -q",workingDirectory);
+                await ExecuteShell("npm install --no-audit --silent --no-progress",workingDirectory);
                 BeamableLogger.Log("Running NodeJS build.");
-                await ExecuteShell("npm run build", workingDirectory);
+                await ExecuteShell("npm run build &> '/dev/null'", workingDirectory);
                 BeamableLogger.Log("Done running SdkCompilation process.");
             }
             catch (Exception e)
