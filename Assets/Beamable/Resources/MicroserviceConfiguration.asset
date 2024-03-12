@@ -18,7 +18,7 @@ MonoBehaviour:
     Archived: 0
     TemplateId: small
     CustomDockerFileStrings: 
-    IncludeDebugTools: 1
+    IncludeDebugTools: 0
     DebugData:
       Username: root
       Password: Password!
@@ -99,7 +99,7 @@ MonoBehaviour:
       Location: Packages/com.beamable.sui/Runtime/SuiFederation/Beamable.Microservice.SuiFederation.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: 29559D53C777673E3635542D60F55CE5
+    Checksum: 760ABD09DFDBBF2B3350EA4AAEFE43F1
   - ServiceName: SuiStorage
     CodeClass: 2
     CodeDirectory: Packages\com.beamable.sui\Runtime\StorageObjects\SuiStorage
@@ -278,7 +278,7 @@ MonoBehaviour:
       Location: Packages/com.beamable.sui/Runtime/SuiFederation/Beamable.Microservice.SuiFederation.asmdef
       IncludePlatforms: []
       AutoReferenced: 0
-    Checksum: 29559D53C777673E3635542D60F55CE5
+    Checksum: 760ABD09DFDBBF2B3350EA4AAEFE43F1
   - ServiceName: Unity.Beamable.Sui.Common
     CodeClass: 3
     CodeDirectory: Packages\com.beamable.sui\Runtime\Common

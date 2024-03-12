@@ -7,7 +7,6 @@ using Beamable.Microservices.SuiFederation.Endpoints;
 using Beamable.Microservices.SuiFederation.Features.Accounts;
 using Beamable.Microservices.SuiFederation.Features.Contracts;
 using Beamable.Microservices.SuiFederation.Features.Contracts.Exceptions;
-using Beamable.Microservices.SuiFederation.Features.DistributedLock;
 using Beamable.Microservices.SuiFederation.Features.ExecWrapper;
 using Beamable.Sui.Common;
 using Beamable.Server;
@@ -57,16 +56,19 @@ namespace Beamable.Microservices.SuiFederation
 
         private static async Task InitializeInternal(IServiceInitializer initializer)
         {
-            //Compile Sui SDK TypeScript
-            await ExecCommand.RunSdkCompilation();
+            if (!_initialized)
+            {
+                //Compile Sui SDK TypeScript
+                await ExecCommand.RunSdkCompilation();
 
-            //Load or create realm account
-            await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
+                //Load or create realm account
+                await initializer.GetService<AccountsService>().GetOrCreateRealmAccount();
 
-            //Load or create contracts
-            await initializer.GetService<ContractService>().InitializeContentContracts();
+                //Load or create contracts
+                await initializer.GetService<ContractService>().InitializeContentContracts();
 
-            _initialized = true;
+                _initialized = true;
+            }
         }
 
         [ClientCallable]
