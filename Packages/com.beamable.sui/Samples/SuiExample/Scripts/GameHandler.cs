@@ -1,6 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
+using Beamable;
+using Beamable.Server.Clients;
+using Beamable.Sui.Common;
+using Beamable.Sui.Common.Content;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using Beamable.Common.Api.Inventory;
+
 
 public class GameHandler : MonoBehaviour
 {
@@ -16,7 +23,7 @@ public class GameHandler : MonoBehaviour
     [SerializeField] private TextMeshProUGUI uiInventoryCoins;
     [SerializeField] private TextMeshProUGUI uiInventoryNft;
     [SerializeField] private GameObject inventorySection;
-    void Start()
+    async void Start()
     {
         inventorySection.SetActive(false);
 
