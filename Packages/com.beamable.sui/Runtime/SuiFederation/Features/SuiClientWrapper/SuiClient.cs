@@ -64,7 +64,7 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
                 await Execute(GetExecutable(), $"keytool --keystore-path sui.keystore import {keyToolConvert.Bench32Format} ed25519");
                 await Execute(GetExecutable(), $"client --client.config client.yaml switch --address {realmAccount.Address}");
 
-                if (Configuration.SuiEnvironment == "devnet")
+                if (Configuration.SuiEnvironment == "devnet" || Configuration.SuiEnvironment == "testnet")
                 {
                     var balanceJson = await Execute(GetExecutable(), $"client --client.config client.yaml gas --json", ignoreOutputError: true);
                     List<GasBalanceItem> gasBalances = JsonConvert.DeserializeObject<List<GasBalanceItem>>(balanceJson);
