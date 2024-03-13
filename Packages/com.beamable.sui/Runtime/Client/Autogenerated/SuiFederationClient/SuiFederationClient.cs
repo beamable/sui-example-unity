@@ -52,6 +52,16 @@ namespace Beamable.Server.Clients
             serializedFields.Add("contentId", raw_contentId);
             return this.Request<string>("SuiFederation", "GetContractAddress", serializedFields);
         }
+        
+        /// <summary>
+        /// Call the GetSuiEnvironment method on the SuiFederation microservice
+        /// <see cref="Beamable.Microservices.SuiFederation.SuiFederation.GetSuiEnvironment"/>
+        /// </summary>
+        public Beamable.Common.Promise<string> GetSuiEnvironment()
+        {
+            System.Collections.Generic.Dictionary<string, object> serializedFields = new System.Collections.Generic.Dictionary<string, object>();
+            return this.Request<string>("SuiFederation", "GetSuiEnvironment", serializedFields);
+        }
     }
     
     internal sealed class MicroserviceParametersSuiFederationClient

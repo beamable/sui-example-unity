@@ -88,6 +88,12 @@ namespace Beamable.Microservices.SuiFederation
                 .GetContractAddress(contentId);
         }
 
+        [ClientCallable]
+        public string GetSuiEnvironment()
+        {
+            return Configuration.SuiEnvironment;
+        }
+
         public async Promise<FederatedAuthenticationResponse> Authenticate(string token, string challenge, string solution)
         {
             return await Provider.GetService<AuthenticateEndpoint>()
