@@ -30,9 +30,6 @@ You can override the values using the realm configuration.
 
 **IMPORTANT:** Configuration is loaded when the service starts. Any configuration change requires a service restart.  
 
-## Sample Project
-To get started with this sample project, use `git` to clone this project, and open it with Unity 2021.
-
 ## Importing Into Your Project
 The Sui integration is portable to other Beamable Unity projects. The Microservice and Microstorage code can be imported into a target project. The best way is to use Unity Package Manager and add a part of this repository as an external package.
 
@@ -111,16 +108,22 @@ Those include:
 * retrieving FT balance
 * retrieving NFT information (owned assets and metadata)
 
+## Sample Project
+To get started with this sample project, use `git` to clone this project, and open it with Unity 2021.
+Unity sample contains a sample scene:  
+![Scene Example](Screenshots/scene.png)
+* Initialize wallet creates a current player custodial wallet whose address is then displayed
+* Open inventory in portal opens the Beamable portal inventory page where you can grant federated items and currencies
+  ![Portal Example](Screenshots/portal.png)
+* Open wallet in explorer opens SuiScan explorer showing players wallet and owned assets
+
 ## Try it out
 * Specify target SuiEnvironment (sample project defaults to 'devnet') 
 * Define your federated NFT content under `blockchain_item` content type
 * Define your federated FT content under `blockchain_currency` content type
 * Publish the **SuiFederation** microservice along with the **SuiStorage** microstorage.
 * When running with the 'devnet' or 'testnet' target SuiEnvironment, the microservice will automatically request some test SUI tokens used for contract deployment and transactions.
+* On Sui 'mainnet' environment you will need to transfer SUI coins to realm account wallet before making transactions
+* Realm account wallet address can be found by calling the microservice `GetRealmAccount` function 
 * Open the Portal an wait for the microservice to get into the **running** state.
 * Explore the microservice logs and microstorage data. Microservice should create and store your developer wallet and contracts on first run.
-
-
-
-
-
