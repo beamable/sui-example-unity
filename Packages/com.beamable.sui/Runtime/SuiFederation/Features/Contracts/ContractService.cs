@@ -90,54 +90,62 @@ namespace Beamable.Microservices.SuiFederation.Features.Contracts
                 return persistedContract;
             }
 
-            var lockManager = _lockManagerFactory.Create($"Create contract {data.contract_name} lock");
-
-            if (await lockManager.AcquireLock(300))
+            var lockManager = _lockManagerFactory.Create($"{data.contract_name}");
+            try
             {
-                if (!_initialized)
+                if (await lockManager.AcquireLock(300))
                 {
-                    //Install SUI Client compatibility layer
-                    await ExecCommand.RunSuiClientCompilation();
-                    _initialized = true;
-                }
-
-                var realmAccount = await _accountsService.GetOrCreateRealmAccount();
-
-                switch (data)
-                {
-                    case ItemModuleData itemModuleData:
-                        await _contractTemplateService.GenerateItemContract(itemModuleData);
-                        break;
-                    case CurrencyModuleData currencyModuleData:
-                        await _contractTemplateService.GenerateCurrencyContract(currencyModuleData);
-                        break;
-                }
-
-                BeamableLogger.Log($"Creating contract for {data.module_name}");
-                var contractDeployOutput = await _suiClient.Compile(data.module_name, realmAccount);
-                var contractCaps = contractDeployOutput.GetCapObjects();
-
-                var contract = new Contract
-                {
-                    Name = data.contract_name,
-                    PackageId = contractDeployOutput.GetPackageId(),
-                    GameAdminCaps = contractCaps.GameAdminCaps.Select(c => new CapObject
+                    if (!_initialized)
                     {
-                        Id = c.Id,
-                        Name = c.Name
-                    }).ToList(),
-                    TreasuryCaps = contractCaps.TreasuryCaps.Select(c => new CapObject
-                    {
-                        Id = c.Id,
-                        Name = c.Name
-                    }).ToList()
-                };
+                        //Install SUI Client compatibility layer
+                        await ExecCommand.RunSuiClientCompilation();
+                        _initialized = true;
+                    }
 
-                await _contractProxy.InitializeContract(contract);
-                await lockManager.ReleaseLock();
-                return contract;
+                    await ExecCommand.RunCopySuiClientCompilation();
+
+                    var realmAccount = await _accountsService.GetOrCreateRealmAccount();
+
+                    switch (data)
+                    {
+                        case ItemModuleData itemModuleData:
+                            await _contractTemplateService.GenerateItemContract(itemModuleData);
+                            break;
+                        case CurrencyModuleData currencyModuleData:
+                            await _contractTemplateService.GenerateCurrencyContract(currencyModuleData);
+                            break;
+                    }
+
+                    BeamableLogger.Log($"Creating contract for {data.module_name}");
+                    var contractDeployOutput = await _suiClient.Compile(data.module_name, realmAccount);
+                    var contractCaps = contractDeployOutput.GetCapObjects();
+
+                    var contract = new Contract
+                    {
+                        Name = data.contract_name,
+                        PackageId = contractDeployOutput.GetPackageId(),
+                        GameAdminCaps = contractCaps.GameAdminCaps.Select(c => new CapObject
+                        {
+                            Id = c.Id,
+                            Name = c.Name
+                        }).ToList(),
+                        TreasuryCaps = contractCaps.TreasuryCaps.Select(c => new CapObject
+                        {
+                            Id = c.Id,
+                            Name = c.Name
+                        }).ToList()
+                    };
+
+                    await _contractProxy.InitializeContract(contract);
+                    BeamableLogger.Log($"Done creating contract for {data.module_name}");
+                    return contract;
+                }
             }
-
+            finally
+            {
+                await ExecCommand.RunCleanupSuiClientCompilation();
+                await lockManager.ReleaseLock();
+            }
             return null;
         }
 

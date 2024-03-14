@@ -32,19 +32,22 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
                 await Execute(GetExecutable(), $"move build --skip-fetch-latest-git-deps", ignoreOutput: true);
                 BeamableLogger.Log($"Deploying smart contract for {moduleName}...");
                 var deployOutputData = await Execute(GetExecutable(),
-                    $"client --client.config client.yaml publish --silence-warnings --json --gas-budget 50000000 --skip-fetch-latest-git-deps ./sources/{moduleName}.move",
+                    $"client --client.config client.yaml publish --skip-dependency-verification --silence-warnings --json --gas-budget 80000000 --skip-fetch-latest-git-deps ./sources/{moduleName}.move",
                     ignoreOutputError: true);
                 var deployOutput = JsonConvert.DeserializeObject<MoveDeployOutput>(deployOutputData);
                 BeamableLogger.Log($"Deploy output package {deployOutput.GetPackageId()}");
                 return deployOutput;
+            }
+            catch (Exception ex)
+            {
+                BeamableLogger.LogError("SmartContract compile error: {processOutput}", ex.Message);
+                throw new ContractCompileError(ex.Message);
             }
             finally
             {
                 await ExecuteShell("rm -r build", WorkingDirectory);
                 await ExecuteShell($"rm sources/{moduleName}.move", WorkingDirectory);
             }
-
-
         }
 
         private async ValueTask Initialize(Account realmAccount)
@@ -63,6 +66,10 @@ namespace Beamable.Microservices.SuiFederation.Features.SuiClientWrapper
                 BeamableLogger.Log("Configuring SUI client tool...");
                 await Execute(GetExecutable(), $"keytool --keystore-path sui.keystore import {keyToolConvert.Bench32Format} ed25519");
                 await Execute(GetExecutable(), $"client --client.config client.yaml switch --address {realmAccount.Address}");
+
+                //BeamableLogger.Log("Extracting Sui Move dependencies...");
+                //await ExecuteShell("mv move_dep.tar.gz /root", WorkingDirectory);
+                //await ExecuteShell("tar -xzf move_dep.tar.gz", "/root");
 
                 if (Configuration.SuiEnvironment == "devnet" || Configuration.SuiEnvironment == "testnet")
                 {
