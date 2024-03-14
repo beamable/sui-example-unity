@@ -1,6 +1,6 @@
 namespace Beamable.Microservices.SuiFederation.Features.Minting.Models
 {
-    public class GameItem
+    public class GameItem : IItemType
     {
         public string Name { get; set; }
         public string Description { get; set; }
@@ -8,6 +8,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting.Models
         public string GameAdminCap { get; set; }
         public string PackageId { get; set; }
         public string ContentName { get; set; }
+        public string ContentId { get; set; }
         public Attribute[] Attributes { get; set; }
     }
 

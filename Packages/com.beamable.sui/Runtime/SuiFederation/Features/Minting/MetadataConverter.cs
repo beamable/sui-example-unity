@@ -19,6 +19,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
                 Description = contentDefinition?.Description ?? "",
                 ImageURL = contentDefinition?.Url ?? "",
                 ContentName = contentDefinition?.ContentName,
+                ContentId =  request.ContentId,
                 Attributes = (properties != null && properties.Count > 0) ? properties
                     .Select(kv => new Attribute
                     {
@@ -33,6 +34,7 @@ namespace Beamable.Microservices.SuiFederation.Features.Minting
             return new CurrencyItem()
             {
                 Name = contentDefinition?.ContentName,
+                ContentId =  request.ContentId,
                 Amount = request.Amount,
             };
         }
