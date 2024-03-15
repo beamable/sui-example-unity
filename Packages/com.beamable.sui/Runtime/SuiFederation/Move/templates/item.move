@@ -9,44 +9,41 @@ use sui::package;
 use sui::display;
 use std::vector as vec;
 
+/// Ensure NFT metadata (Attributes) vector properties length
 const EVecLengthMismatch: u64 = 1;
 
+/// Type that marks Capability to create new item
 struct GameAdminCap has key { id: UID }
 
+/// NFT one-time witness (guaranteed to have at most one instance), name matches the module name
 struct {{toUpperCase module_name}} has drop {}
 
+/// NFT metadata
 struct Attribute has store, copy, drop {
     name: String,
     value: String
 }
 
+/// NFT Struct
 struct {{toStructName module_name}} has key, store {
     id: UID,
     name: String,
     description: String,
     url: Url,
-    {{#each customFields}}
-    {{this}}: String,
-    {{/each}}
     attributes: vector<Attribute>
 }
 
+/// Called on contract publish, defines NFT display properties
 fun init(otw: {{toUpperCase module_name}}, ctx: &mut TxContext) {
     let keys = vector[
         utf8(b"name"),
         utf8(b"description"),
-        utf8(b"url"),
-        {{#each customFields}}
-        utf8(b"{{this}}"),
-        {{/each}}
+        utf8(b"url")
         ];
     let values = vector[
         utf8(b"{name}"),
         utf8(b"{description}"),
-        utf8(b"{url}"),
-        {{#each customFields}}
-        utf8(b"{{this}}"),
-        {{/each}}
+        utf8(b"{url}")
         ];
 
     let publisher = package::claim(otw, ctx);
@@ -57,53 +54,11 @@ fun init(otw: {{toUpperCase module_name}}, ctx: &mut TxContext) {
     transfer::transfer(GameAdminCap {id: object::new(ctx)}, tx_context::sender(ctx));
 }
 
-    public fun update_name(
-        _: &GameAdminCap,
-        nft: &mut {{toStructName module_name}},
-        new_name: vector<u8>,
-        _: &mut TxContext
-        ) {
-        nft.name = string::utf8(new_name)
-    }
-
-    public fun update_description(
-        _: &GameAdminCap,
-        nft: &mut {{toStructName module_name}},
-        new_description: vector<u8>,
-        _: &mut TxContext
-        ) {
-        nft.description = string::utf8(new_description)
-    }
-
-    public fun update_url(
-        _: &GameAdminCap,
-        nft: &mut {{toStructName module_name}},
-        new_url: vector<u8>,
-        _: &mut TxContext
-        ) {
-        nft.url = url::new_unsafe_from_bytes(new_url)
-    }
-
-{{#each customFields}}
-    public fun update_{{this}}(
-        _: &GameAdminCap,
-        nft: &mut {{toStructName module_name}},
-        new_{{this}}: vector<u8>,
-        _: &mut TxContext
-        ) {
-        nft.{{this}} = string::utf8(new_{{this}})
-    }
-
-{{/each}}
-
-
+/// Constructs NFT object
 fun new(
     name: vector<u8>,
     description: vector<u8>,
     url: vector<u8>,
-    {{#each customFields}}
-    {{this}}: vector<u8>,
-    {{/each}}
     names: vector<String>,
     values: vector<String>,
     ctx: &mut TxContext): {{toStructName module_name}} {
@@ -115,9 +70,6 @@ fun new(
             name: string::utf8(name),
             description: string::utf8(description),
             url: url::new_unsafe_from_bytes(url),
-            {{#each customFields}}
-            {{this}}: string::utf8({{this}}),
-            {{/each}}
             attributes: vec::empty()
         };
 
@@ -132,6 +84,7 @@ fun new(
     item
 }
 
+/// NFT mint function
 public entry fun create(
     _: &GameAdminCap,
     player: address,
