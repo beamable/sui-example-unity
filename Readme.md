@@ -146,3 +146,6 @@ Those include:
 - Realm account wallet address can be found by calling the microservice `GetRealmAccount` function 
 - Open the Portal an wait for the microservice to get into the **running** state.
 - Explore the microservice logs and microstorage data. Microservice should create and store your developer wallet and contracts on first run.
+
+## Beamable SUI Sample project structure
+Beamable SUI Sample project structure can be found [here](Packages/com.beamable.sui/Readme.md).
