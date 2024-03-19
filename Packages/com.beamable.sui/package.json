@@ -1,6 +1,6 @@
 {
   "name": "com.beamable.sui",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "displayName": "Beamable Sui",
   "description": "Integrate login and inventory with the Sui blockchain.",
   "unity": "2021.3",
@@ -23,7 +23,7 @@
   },
   "samples": [
     {
-      "displayName": "Authentication and inventory example",
+      "displayName": "Demo",
       "description": "Example showing authentication and inventory operations",
       "path": "Samples~/SuiExamples"
     }
